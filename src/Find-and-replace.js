@@ -1,19 +1,11 @@
-import sketch from 'sketch'
 import BrowserWindow from 'sketch-module-web-view'
 import { isWebviewPresent, sendToWebview } from 'sketch-module-web-view/remote'
 import pack from '../package.json'
 
-// documentation: https://developer.sketchapp.com/reference/api/
 
-// defaults write ~/Library/Preferences/com.bohemiancoding.sketch3.plist AlwaysReloadScript -bool YES
-// defaults write ~/Library/Preferences/com.bohemiancoding.sketch3.plist AlwaysReloadScript -bool NO
-
-// touch ~/Library/Logs/com.bohemiancoding.sketch3/Plugin\ Log.log
-// tail -F ~/Library/Logs/com.bohemiancoding.sketch3/Plugin\ Log.log
-
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions
-
-const { UI, Settings, Document } = sketch
+import UI from 'sketch/ui'
+import Settings from 'sketch/settings'
+import Document from 'sketch/dom'
 
 const PREFUNIQUKEY = 'cx.ap.sketch-find-and-replace.pref'
 const SATEUNIQUKEY = 'cx.ap.sketch-find-and-replace.state'
@@ -58,8 +50,22 @@ const debounce = (fn, time) => {
   }
 }
 
+// export const menu1 = () => {
+//   const document = Document.getSelectedDocument()
+//   if (document) {
+//     const selectedLayers = document.selectedLayers
+//     if (selectedLayers.length > 0) {
+//       UI.message('Find and replace in the selection (v' + pack.version + ')', document)
+//     } else {
+//       UI.message('Find and replace in the current page (v' + pack.version + ')', document)
+//     }
+//   } else {
+//     UI.message('No document selected')
+//   }
+// }
 
-export default function() {
+
+export default function(context) {
   let theme = ''
   if (UI && UI.getTheme) {
     theme = UI.getTheme()
@@ -82,7 +88,7 @@ export default function() {
     // load pref
     const savedSettings = Settings.settingForKey(PREFUNIQUKEY)
     if (
-      typeof savedSettings === 'string' 
+      typeof savedSettings === 'string'
       && typeof JSON.parse(savedSettings) === 'object'
     ) {
       state = Object.assign({}, defaultSettings, JSON.parse(savedSettings))
@@ -101,12 +107,13 @@ export default function() {
   let selection = null
 
   if (document) {
-    selection = document.selectedLayers
-    if (selection.length > 0) {
-      UI.message('Find and replace in the selection (v' + pack.version + ')')
+    const selectedLayers = document.selectedLayers
+    selection = selectedLayers.layers
+    if (selectedLayers.length > 0) {
+      UI.message('Find and replace in the selection (v' + pack.version + ')', document)
       state = Object.assign({}, state, { findMode: 1, selection: true })
     } else {
-      UI.message('Find and replace in the current page (v' + pack.version + ')')
+      UI.message('Find and replace in the current page (v' + pack.version + ')', document)
       const page = document.selectedPage
       selection = page.layers
       state = Object.assign({}, state, { findMode: 2, selection: false })
@@ -126,7 +133,7 @@ export default function() {
     resizable: false,
     alwaysOnTop: true,
     fullscreenable: false,
-    title: 'Find and Replace V2',
+    title: 'Find and Replace V3',
     acceptFirstMouse: true,
     minimizable: false,
     maximizable: false
@@ -138,7 +145,16 @@ export default function() {
     browserWindow = null
   })
 
-  browserWindow.loadURL(require('../ressources/index.html'))
+
+  const pluginUrl = context.plugin.url();
+  const contentsUrl = pluginUrl.URLByAppendingPathComponent('Contents');
+  const resourcesUrl = contentsUrl.URLByAppendingPathComponent('Resources');
+  const htmlUrl = resourcesUrl.URLByAppendingPathComponent('resources/index.html');
+
+  console.log('htmlUrl: ' + htmlUrl.absoluteString())
+
+  browserWindow.loadURL(htmlUrl.absoluteString());
+
 
   let contents = browserWindow.webContents
 
@@ -147,13 +163,13 @@ export default function() {
     UI.message(`${state.findString} replace by ${state.replaceString}`)
     // reset layers
     layers = []
-    // reset overrides 
+    // reset overrides
     overrides = []
     // wholeWord
     const rexExpFlag = `g${(state.caseSensitive == true) ? '': 'i'}`
     const regExpPrefix = state.wholeWord ? '(?:\\^|\\b)' : ''
     const regExpSufix = state.wholeWord ? '(?=\\b|\\$)' : ''
-    const regExpPattern = (state.regexActive) 
+    const regExpPattern = (state.regexActive)
       ? `${regExpPrefix}${state.findString}${regExpSufix}`
       : `${regExpPrefix}(?:${escapeRegExp(state.findString)})${regExpSufix}`
     const regex = new RegExp(regExpPattern, rexExpFlag)
@@ -165,17 +181,16 @@ export default function() {
     switch(findMode){
     case 1:
       if (document && document.selectedLayers.length > 0) {
-        selection = document.selectedLayers
+        selection = document.selectedLayers.layers
       }
       break
     case 3:
       selection = document.pages
-      // log(JSON.stringify(document.selectedPage,null,1))
       break
     default:
       selection = document.selectedPage.layers
     }
-    state = Object.assign({}, state, { 
+    state = Object.assign({}, state, {
       regex: regex
     })
     parseLayers(selection, regex)
@@ -207,10 +222,10 @@ export default function() {
       state = Object.assign({}, state, { init })
     }
     if (isWebviewPresent(windowOptions.identifier)) {
-      sendToWebview(
-        windowOptions.identifier,
-        `updateData('${JSON.stringify(state)}')`
-      )
+      // sendToWebview(
+      //   windowOptions.identifier,
+      //   `updateData('${JSON.stringify(state)}');`
+      // )
     }
     state = Object.assign({}, state, { init: false })
   }
@@ -225,29 +240,28 @@ export default function() {
     // log(JSON.stringify(layers, null, 1))
     // recursive function
     layers.forEach(layer => {
-      
+
       switch(layer.type){
       case 'Artboard':
         if (layer.layers && layer.layers.length > 0) {
           parseLayers(layer.layers)
         }
         break
-  
+
       case 'Group':
         // log('Group')
         if (layer.layers) {
           parseLayers(layer.layers)
         }
         break
-  
+
       case 'Text':
         // log('Text')
         if(layerTextMatch(layer)) {
           replaceInLayer(layer)
         }
-        //layer.text = 'toto'
         break
-  
+
       case 'ShapePath':
         // log('ShapePath')
         break
@@ -255,22 +269,24 @@ export default function() {
       case 'Shape':
         // log('Shape')
         break
-      
+
       case 'SymbolMaster':
         // log('SymbolMaster ' + document.selectedPage.name + ' ' + (findMode === 1))
         if (findMode === 1 || document.selectedPage.name === 'Symbols') {
           parseLayers(layer.layers)
         }
         break
-      
+
       case 'SymbolInstance':
         // log('SymbolInstance')
-        parseOverrides(layer.overrides)
+        if (layer.overrides) {
+          parseOverrides(layer.overrides)
+        }
         break
-  
+
       case 'Image':
         break
-        
+
       default:
         if (layer.layers) {
           parseLayers(layer.layers)
@@ -289,16 +305,16 @@ export default function() {
           replaceInOverride(override)
         }
         break
-      
+
       case 'SymbolInstance':
         // log('-SymbolInstance')
         break
-      
+
       case 'ShapePath':
         // log('-ShapePath')
         // log(override.value)
         break
-      
+
       case 'Shape':
         // log('-Shape')
         // log(override.value)
@@ -307,10 +323,10 @@ export default function() {
       case 'Image':
         // log('-Image')
         break
-        
+
       default:
         // log('#####--- Default override type: ' + override.affectedLayer.type)
-        /* 
+        /*
         if (override.layers) {
           parseLayers(override.layers)
         }
