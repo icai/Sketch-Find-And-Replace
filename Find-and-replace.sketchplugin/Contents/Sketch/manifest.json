@@ -24,5 +24,7 @@
     "items": [
       "Find-and-replace"
     ]
-  }
+  },
+  "version": "2.11.1",
+  "disableCocoaScriptPreprocessor": true
 }

@@ -32,7 +32,7 @@ export default defineConfig({
   build: {
     // target: 'es6',
     sourcemap: false,
-    minify: true,
+    minify: false,
     lib: {
       entry: path.resolve(__dirname, 'src/Find-and-replace.js'),
       formats: ['cjs'],

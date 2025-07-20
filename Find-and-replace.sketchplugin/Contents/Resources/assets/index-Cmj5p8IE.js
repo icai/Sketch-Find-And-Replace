@@ -6277,7 +6277,7 @@ const _sfc_main$g = {
     };
   }
 };
-const version = "2.12.2";
+const version = "3.0.1";
 const pack = {
   version
 };

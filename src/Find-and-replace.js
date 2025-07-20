@@ -1,5 +1,5 @@
-import BrowserWindow from 'sketch-module-web-view'
-import { isWebviewPresent, sendToWebview } from 'sketch-module-web-view/remote'
+import BrowserWindow from './sketch-web-view/lib/index'
+import { isWebviewPresent, sendToWebview } from './sketch-web-view/remote'
 import pack from '../package.json'
 
 import UI from 'sketch/ui'

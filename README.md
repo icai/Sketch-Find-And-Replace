@@ -1,7 +1,9 @@
-# [Find and Replace](https://github.com/thierryc/Sketch-Find-And-Replace/) V2 for Sketch
+# [Find and Replace](https://github.com/icai/Sketch-Find-And-Replace/) V3 for Sketch
+
+> Webview UI migrated from React to Vue 3 (2025)
 
 
-![Find and Replace (text) for Sketch](https://raw.githubusercontent.com/thierryc/Sketch-Find-And-Replace/master/_crea/visual-v2.jpg)
+![Find and Replace (text) for Sketch](https://raw.githubusercontent.com/icai/Sketch-Find-And-Replace/master/_crea/visual-v3.jpg)
 
 
 [Folow me on twitter](https://twitter.com/@Autre_planete) to be posted.
@@ -64,6 +66,11 @@ V1 Created by [Martin Steven - @mscodemonkey](https://github.com/mscodemonkey) -
 V2 Created by [Thierry Charbonnel - @thierryc](https://anotherplanet.io).
 
 V2 Maintained and improved by [Thierry Charbonnel - @thierryc](https://anotherplanet.io).
+
+
+V3 Created, maintained by [Thierry Charbonnel - @thierryc](https://github.com/thierryc) and [Terry Cai - @icai](https://github.com/icai).
+
+Webview UI migrated from React to Vue 3 by [Terry Cai - @icai](https://github.com/icai).
 
 Thanks to [Aby Nimbalkar - @abynim](https://github.com/abynim) - for the SketchPlugin-Remember code to save user settings.
 
