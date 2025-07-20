@@ -7,8 +7,19 @@ import UI from 'sketch/ui'
 import Settings from 'sketch/settings'
 import Document from 'sketch/dom'
 
-const PREFUNIQUKEY = 'cx.ap.sketch-find-and-replace.pref'
-const SATEUNIQUKEY = 'cx.ap.sketch-find-and-replace.state'
+// documentation: https://developer.sketchapp.com/reference/api/
+
+// defaults write ~/Library/Preferences/com.bohemiancoding.sketch3.plist AlwaysReloadScript -bool YES
+// defaults write ~/Library/Preferences/com.bohemiancoding.sketch3.plist AlwaysReloadScript -bool NO
+
+// touch ~/Library/Logs/com.bohemiancoding.sketch3/Plugin\ Log.log
+// tail -F ~/Library/Logs/com.bohemiancoding.sketch3/Plugin\ Log.log
+
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions
+
+
+const PREFUNIQUKEY = 'cx.icai.sketch-find-and-replace.pref'
+const SATEUNIQUKEY = 'cx.icai.sketch-find-and-replace.state'
 
 // to delete saved settings uncoment the next line
 // Settings.setSettingForKey(PREFUNIQUKEY, JSON.stringify({}))
@@ -49,20 +60,6 @@ const debounce = (fn, time) => {
     timeout = setTimeout(functionCall, time)
   }
 }
-
-// export const menu1 = () => {
-//   const document = Document.getSelectedDocument()
-//   if (document) {
-//     const selectedLayers = document.selectedLayers
-//     if (selectedLayers.length > 0) {
-//       UI.message('Find and replace in the selection (v' + pack.version + ')', document)
-//     } else {
-//       UI.message('Find and replace in the current page (v' + pack.version + ')', document)
-//     }
-//   } else {
-//     UI.message('No document selected')
-//   }
-// }
 
 
 export default function(context) {
@@ -127,9 +124,9 @@ export default function(context) {
 
 
   const windowOptions = {
-    identifier: 'cx.ap.sketch-find-and-replace.webWiew',
+    identifier: 'cx.icai.sketch-find-and-replace',
     width: 460,
-    height: 240,
+    height: 250,
     resizable: false,
     alwaysOnTop: true,
     fullscreenable: false,
@@ -147,12 +144,7 @@ export default function(context) {
 
 
   const pluginUrl = context.plugin.url();
-  const contentsUrl = pluginUrl.URLByAppendingPathComponent('Contents');
-  const resourcesUrl = contentsUrl.URLByAppendingPathComponent('Resources');
-  const htmlUrl = resourcesUrl.URLByAppendingPathComponent('resources/index.html');
-
-  console.log('htmlUrl: ' + htmlUrl.absoluteString())
-
+  const htmlUrl = pluginUrl.URLByAppendingPathComponent('Contents/Resources/resources/index.html');
   browserWindow.loadURL(htmlUrl.absoluteString());
 
 
@@ -186,6 +178,7 @@ export default function(context) {
       break
     case 3:
       selection = document.pages
+      // log(JSON.stringify(document.selectedPage,null,1))
       break
     default:
       selection = document.selectedPage.layers
@@ -222,10 +215,10 @@ export default function(context) {
       state = Object.assign({}, state, { init })
     }
     if (isWebviewPresent(windowOptions.identifier)) {
-      // sendToWebview(
-      //   windowOptions.identifier,
-      //   `updateData('${JSON.stringify(state)}');`
-      // )
+      sendToWebview(
+        windowOptions.identifier,
+        `updateData('${JSON.stringify(state)}')`
+      )
     }
     state = Object.assign({}, state, { init: false })
   }
@@ -260,6 +253,7 @@ export default function(context) {
         if(layerTextMatch(layer)) {
           replaceInLayer(layer)
         }
+        //layer.text = 'toto'
         break
 
       case 'ShapePath':
@@ -367,9 +361,19 @@ export default function(context) {
   }, 100))
 
   contents.on('replace', debounce(json => {
+
     const newState = Object.assign({}, JSON.parse(json))
     initRegExp(newState)
     saveSettings(state)
+    // 通知前端 replaceStart 结束，关闭 loading
+    // if (isWebviewPresent(windowOptions.identifier)) {
+    //   // 先更新数据
+    //   const stateForUpdate = Object.assign({}, state, { replaceStart: false })
+    //   sendToWebview(
+    //     windowOptions.identifier,
+    //     `updateData('${JSON.stringify(stateForUpdate)}')`
+    //   )
+    // }
     browserWindow.close()
   }, 100))
 

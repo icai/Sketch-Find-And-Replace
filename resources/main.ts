@@ -2,21 +2,6 @@ import { createApp } from 'vue'
 import App from './components/App.vue'
 
 
-// Prevent libraries from crashing if they try to access Node globals
-if (typeof module === 'undefined') {
-// eslint-disable-next-line no-undef
-var module = {};
-}
-
-if (typeof exports === 'undefined') {
-// eslint-disable-next-line no-undef
-var exports = {};
-}
-if (typeof window === 'undefined') {
-// eslint-disable-next-line no-undef
-var window = {};
-}
-
 window.settings = {}
 
 window.updateData = function(json: string) {
@@ -27,5 +12,15 @@ window.updateData = function(json: string) {
   }
 }
 
-const app = createApp(App)
-app.mount('#root')
+const initApp = () => {
+  const app = createApp(App)
+  app.mount('#root')
+}
+
+setTimeout(() => {
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    initApp()
+  } else {
+    document.addEventListener('DOMContentLoaded', initApp)
+  }
+}, 0)

@@ -1,9 +1,7 @@
 <script setup>
 import { ref, onMounted, nextTick, computed } from 'vue'
-import { getTheme } from './Colors'
 import Help from './Help.vue'
 import Loading from './Loading.vue'
-import GlobalStyle from './GlobalStyle.vue'
 import Page from './Page.vue'
 import Row from './Row.vue'
 import RowGroup from './RowGroup.vue'
@@ -38,7 +36,7 @@ const mounted = ref(false)
 const findInputRef = ref(null)
 const replaceInputRef = ref(null)
 
-const theme = computed(() => getTheme(darkMode.value))
+// 主题切换由 data-theme 属性控制，无需 theme 传递
 
 onMounted(() => {
   window.SetSettings = json => {
@@ -57,6 +55,7 @@ onMounted(() => {
     nextTick(() => {
       findInputRef.value && findInputRef.value.focus()
     })
+    document.body.setAttribute('data-theme', state.darkMode ? 'dark' : 'light')
   }
   setTimeout(() => {
     findInputRef.value && findInputRef.value.focus()
@@ -64,10 +63,12 @@ onMounted(() => {
   }, 5000)
   document.body.style.margin = 0
   document.body.style.padding = 0
+  document.body.setAttribute('data-theme', darkMode.value ? 'dark' : 'light')
 })
 
 function changeMode() {
   darkMode.value = !darkMode.value
+  document.body.setAttribute('data-theme', darkMode.value ? 'dark' : 'light')
   window.postMessage('setDarkMode', darkMode.value)
 }
 function handleRegex() {
@@ -174,7 +175,7 @@ function findInputHandleKeyPress(event) {
 }
 function findInputHandleOnChange(event) {
   findString.value = event.target.value
-  replaceString.value = replaceInputRef.value ? replaceInputRef.value.value.split('\\').join('') : ''
+  // replaceString is already bound via v-model, no need to access replaceInputRef.value.value
 }
 function replaceInputHandleKeyPress(event) {
   if (event.key === 'Enter') {
@@ -182,7 +183,7 @@ function replaceInputHandleKeyPress(event) {
   }
 }
 function replaceInputHandleOnChange(event) {
-  findString.value = findInputRef.value ? findInputRef.value.value : ''
+  // findString.value = findInputRef.value ? findInputRef.value.value : ''
   replaceString.value = event.target.value.split('\\').join('')
 }
 function closeWindow() {
@@ -213,24 +214,22 @@ function replaceFn() {
   }))
 }
 </script>
-
 <template>
   <ActionBar>
     <BtnGroup>
-      <BtnText :style="{ cursor: 'pointer' }" :theme="theme" @click="changeMode">
+      <BtnText :style="{ cursor: 'pointer' }" @click="changeMode">
         {{ darkMode ? 'Light Mode' : 'Dark Mode' }}
       </BtnText>
-      <BtnText :theme="theme" :style="{ cursor: 'help' }" @click="toogleHelp">?</BtnText>
+      <BtnText :style="{ cursor: 'help' }" @click="toogleHelp">?</BtnText>
     </BtnGroup>
   </ActionBar>
-  <Page :theme="theme">
+  <Page>
     <RowGroup>
       <Row>
-        <InputLabel :theme="theme">FIND</InputLabel>
+        <InputLabel>FIND</InputLabel>
       </Row>
       <Row>
         <Input
-          :theme="theme"
           :value="findString"
           @keypress="findInputHandleKeyPress"
           @input="findInputHandleOnChange"
@@ -241,25 +240,24 @@ function replaceFn() {
           spellcheck="false"
         />
         <BtnGroup>
-          <BtnInage @click="handleRegex" :theme="theme" :isActive="regexActive">
-            <RegexIcon :theme="theme" :isActive="regexActive" />
+          <BtnInage @click="handleRegex" :isActive="regexActive">
+            <RegexIcon :isActive="regexActive" />
           </BtnInage>
-          <BtnInage @click="handleCaseSensitive" :theme="theme" :isActive="caseSensitive">
-            <CaseSensitiveIcon :theme="theme" :isActive="caseSensitive" />
+          <BtnInage @click="handleCaseSensitive" :isActive="caseSensitive">
+            <CaseSensitiveIcon :isActive="caseSensitive" />
           </BtnInage>
-          <BtnInage @click="handleWholeWord" :theme="theme" :isActive="wholeWord">
-            <WholeWordIcon :theme="theme" :isActive="wholeWord" />
+          <BtnInage @click="handleWholeWord" :isActive="wholeWord">
+            <WholeWordIcon :isActive="wholeWord" />
           </BtnInage>
         </BtnGroup>
       </Row>
     </RowGroup>
     <RowGroup>
       <Row>
-        <InputLabel :theme="theme">REPLACE BY</InputLabel>
+        <InputLabel>REPLACE BY</InputLabel>
       </Row>
       <Row>
         <Input
-          :theme="theme"
           :value="replaceString"
           @keypress="replaceInputHandleKeyPress"
           @input="replaceInputHandleOnChange"
@@ -270,22 +268,22 @@ function replaceFn() {
           spellcheck="false"
         />
         <BtnGroup>
-          <BtnInage v-if="selection" @click="handleSelection" :theme="theme" :isActive="findMode === 1">
-            <SelectionIcon :theme="theme" :isActive="findMode === 1" />
+          <BtnInage v-if="selection" @click="handleSelection" :isActive="findMode === 1">
+            <SelectionIcon :isActive="findMode === 1" />
           </BtnInage>
-          <BtnInage @click="handlePage" :theme="theme" :isActive="findMode === 2">
-            <PageIcon :theme="theme" :isActive="findMode === 2" />
+          <BtnInage @click="handlePage" :isActive="findMode === 2">
+            <PageIcon :isActive="findMode === 2" />
           </BtnInage>
-          <BtnInage @click="handleDocument" :theme="theme" :isActive="findMode === 3">
-            <DocumentIcon :theme="theme" :isActive="findMode === 3" />
+          <BtnInage @click="handleDocument" :isActive="findMode === 3">
+            <DocumentIcon :isActive="findMode === 3" />
           </BtnInage>
         </BtnGroup>
       </Row>
     </RowGroup>
     <InfoRowGroup>
-      <InfoString :theme="theme">
+      <InfoString>
         Options:
-        <InfoStringIn :theme="theme">
+        <InfoStringIn>
           {{ regexActive ? ' Regex, ' : ' ' }}
           {{ caseSensitive ? 'Case Sensitive, ' : 'Case Insensitive, ' }}
           {{ wholeWord ? 'Whole Word, ' : '' }}
@@ -298,12 +296,73 @@ function replaceFn() {
     </InfoRowGroup>
     <RowGroup>
       <Row>
-        <Button @click="closeWindow" :theme="theme" :isActive="true">Cancel</Button>
-        <Button @click="replaceFn" primary :theme="theme" :isActive="!replaceStart">Replace</Button>
+        <Button @click="closeWindow" :isActive="true">Cancel</Button>
+        <Button @click="replaceFn" primary :isActive="!replaceStart">Replace</Button>
       </Row>
     </RowGroup>
   </Page>
-  <Help :isActive="helpActive" :theme="theme" :close="toogleHelp" :resetPref="resetPref" />
-  <Loading :isActive="replaceStart || !mounted" :theme="theme" :resetPref="resetPref" />
-  <GlobalStyle :theme="theme" />
+  <Help :isActive="helpActive" :close="toogleHelp" :resetPref="resetPref" />
+  <Loading :isActive="replaceStart || !mounted" :resetPref="resetPref" />
 </template>
+<style>
+:root {
+  --background: #ffffff;
+  --stroke: #B6B6B6;
+  --text: #A0A0A0;
+  --text-info: #494949;
+  --active-icon-color: #0081E0;
+  --active-icon-opacity: 1.0;
+  --inactive-icon-color: #000000;
+  --inactive-icon-opacity: 0.2;
+  --btn-bg: #EBEBEB;
+  --btn-text: #494949;
+  --primary-btn-bg: #005A9D;
+  --primary-btn-text: #ffffff;
+  --input-label: #A8A8A8;
+  --input-text: #000000;
+  --input-background: #FAFAFA;
+}
+
+[data-theme='dark'] {
+  --background: #212121;
+  --stroke: #616161;
+  --text: #A0A0A0;
+  --text-info: #ffffff;
+  --active-icon-color: #0081E0;
+  --active-icon-opacity: 1.0;
+  --inactive-icon-color: #ffffff;
+  --inactive-icon-opacity: 0.3;
+  --btn-bg: #3B3B3B;
+  --btn-text: #FFFFFF;
+  --primary-btn-bg: #005A9D;
+  --primary-btn-text: #ffffff;
+  --input-label: #A8A8A8;
+  --input-text: #ffffff;
+  --input-background: #2D2D2D;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', 'Helvetica', 'Arial', sans-serif;
+  background: var(--bg-color);
+  color: var(--text-color);
+  overflow-x: hidden;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+a, a:active, a:visited {
+  color: #0079FF;
+}
+
+@font-face {
+  font-family: emoji;
+  src: local('Apple Color Emoji');
+  unicode-range: U+1F300-1F5FF, U+1F600-1F64F, U+1F680-1F6FF, U+2600-26FF;
+}
+</style>

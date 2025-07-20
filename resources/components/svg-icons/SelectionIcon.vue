@@ -9,7 +9,7 @@
       >
         <g
           transform='translate(6.000000, 9.500000)'
-          :fill="isActive ? theme.activeIconColor : theme.inactiveIconColor"
+           :fill="isActive ? 'var(--active-icon-color)' : 'var(--inactive-icon-color)'"
         >
           <rect x='0' y='0' width='2' height='5' />
           <rect x='3' y='0' width='2' height='5' />
@@ -25,5 +25,5 @@
 </template>
 
 <script setup>
-defineProps({ theme: Object, isActive: Boolean })
+defineProps({ isActive: Boolean })
 </script>

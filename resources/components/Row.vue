@@ -11,7 +11,6 @@
 <style scoped>
 .row {
   display: flex;
-  align-items: center;
-  margin-bottom: 8px;
+  justify-content: space-between;
 }
 </style>

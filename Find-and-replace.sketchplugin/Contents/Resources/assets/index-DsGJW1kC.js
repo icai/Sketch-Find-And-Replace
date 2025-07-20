@@ -2275,6 +2275,9 @@ function renderSlot(slots, name, props = {}, fallback, noSlotted) {
     validSlotContent || [],
     validSlotContent && slots._ === 1 ? 64 : -2
   );
+  if (!noSlotted && rendered.scopeId) {
+    rendered.slotScopeIds = [rendered.scopeId + "-s"];
+  }
   if (slot && slot._c) {
     slot._d = true;
   }
@@ -2795,7 +2798,7 @@ function createAppAPI(render, hydrate) {
     const installedPlugins = /* @__PURE__ */ new WeakSet();
     const pluginCleanupFns = [];
     let isMounted = false;
-    const app2 = context.app = {
+    const app = context.app = {
       _uid: uid$1++,
       _component: rootComponent,
       _props: rootProps,
@@ -2812,12 +2815,12 @@ function createAppAPI(render, hydrate) {
         if (installedPlugins.has(plugin)) ;
         else if (plugin && isFunction(plugin.install)) {
           installedPlugins.add(plugin);
-          plugin.install(app2, ...options);
+          plugin.install(app, ...options);
         } else if (isFunction(plugin)) {
           installedPlugins.add(plugin);
-          plugin(app2, ...options);
+          plugin(app, ...options);
         } else ;
-        return app2;
+        return app;
       },
       mixin(mixin) {
         {
@@ -2825,25 +2828,25 @@ function createAppAPI(render, hydrate) {
             context.mixins.push(mixin);
           }
         }
-        return app2;
+        return app;
       },
       component(name, component) {
         if (!component) {
           return context.components[name];
         }
         context.components[name] = component;
-        return app2;
+        return app;
       },
       directive(name, directive) {
         if (!directive) {
           return context.directives[name];
         }
         context.directives[name] = directive;
-        return app2;
+        return app;
       },
       mount(rootContainer, isHydrate, namespace) {
         if (!isMounted) {
-          const vnode = app2._ceVNode || createVNode(rootComponent, rootProps);
+          const vnode = app._ceVNode || createVNode(rootComponent, rootProps);
           vnode.appContext = context;
           if (namespace === true) {
             namespace = "svg";
@@ -2854,8 +2857,8 @@ function createAppAPI(render, hydrate) {
             render(vnode, rootContainer, namespace);
           }
           isMounted = true;
-          app2._container = rootContainer;
-          rootContainer.__vue_app__ = app2;
+          app._container = rootContainer;
+          rootContainer.__vue_app__ = app;
           return getComponentPublicInstance(vnode.component);
         }
       },
@@ -2866,20 +2869,20 @@ function createAppAPI(render, hydrate) {
         if (isMounted) {
           callWithAsyncErrorHandling(
             pluginCleanupFns,
-            app2._instance,
+            app._instance,
             16
           );
-          render(null, app2._container);
-          delete app2._container.__vue_app__;
+          render(null, app._container);
+          delete app._container.__vue_app__;
         }
       },
       provide(key, value) {
         context.provides[key] = value;
-        return app2;
+        return app;
       },
       runWithContext(fn) {
         const lastApp = currentApp;
-        currentApp = app2;
+        currentApp = app;
         try {
           return fn();
         } finally {
@@ -2887,7 +2890,7 @@ function createAppAPI(render, hydrate) {
         }
       }
     };
-    return app2;
+    return app;
   };
 }
 let currentApp = null;
@@ -5456,7 +5459,6 @@ function createComponentInstance(vnode, parent, suspense) {
   return instance;
 }
 let currentInstance = null;
-const getCurrentInstance = () => currentInstance || currentRenderingInstance;
 let internalSetCurrentInstance;
 let setInSSRSetupState;
 {
@@ -5749,72 +5751,6 @@ function patchClass(el, value, isSVG) {
 const vShowOriginalDisplay = Symbol("_vod");
 const vShowHidden = Symbol("_vsh");
 const CSS_VAR_TEXT = Symbol("");
-function useCssVars(getter) {
-  const instance = getCurrentInstance();
-  if (!instance) {
-    return;
-  }
-  const updateTeleports = instance.ut = (vars = getter(instance.proxy)) => {
-    Array.from(
-      document.querySelectorAll(`[data-v-owner="${instance.uid}"]`)
-    ).forEach((node) => setVarsOnNode(node, vars));
-  };
-  const setVars = () => {
-    const vars = getter(instance.proxy);
-    if (instance.ce) {
-      setVarsOnNode(instance.ce, vars);
-    } else {
-      setVarsOnVNode(instance.subTree, vars);
-    }
-    updateTeleports(vars);
-  };
-  onBeforeUpdate(() => {
-    queuePostFlushCb(setVars);
-  });
-  onMounted(() => {
-    watch(setVars, NOOP, { flush: "post" });
-    const ob = new MutationObserver(setVars);
-    ob.observe(instance.subTree.el.parentNode, { childList: true });
-    onUnmounted(() => ob.disconnect());
-  });
-}
-function setVarsOnVNode(vnode, vars) {
-  if (vnode.shapeFlag & 128) {
-    const suspense = vnode.suspense;
-    vnode = suspense.activeBranch;
-    if (suspense.pendingBranch && !suspense.isHydrating) {
-      suspense.effects.push(() => {
-        setVarsOnVNode(suspense.activeBranch, vars);
-      });
-    }
-  }
-  while (vnode.component) {
-    vnode = vnode.component.subTree;
-  }
-  if (vnode.shapeFlag & 1 && vnode.el) {
-    setVarsOnNode(vnode.el, vars);
-  } else if (vnode.type === Fragment) {
-    vnode.children.forEach((c) => setVarsOnVNode(c, vars));
-  } else if (vnode.type === Static) {
-    let { el, anchor } = vnode;
-    while (el) {
-      setVarsOnNode(el, vars);
-      if (el === anchor) break;
-      el = el.nextSibling;
-    }
-  }
-}
-function setVarsOnNode(el, vars) {
-  if (el.nodeType === 1) {
-    const style = el.style;
-    let cssText = "";
-    for (const key in vars) {
-      style.setProperty(`--${key}`, vars[key]);
-      cssText += `--${key}: ${vars[key]};`;
-    }
-    style[CSS_VAR_TEXT] = cssText;
-  }
-}
 const displayRE = /(^|;)\s*display\s*:/;
 function patchStyle(el, prev, next) {
   const style = el.style;
@@ -6114,12 +6050,12 @@ function ensureRenderer() {
   return renderer || (renderer = createRenderer(rendererOptions));
 }
 const createApp = (...args) => {
-  const app2 = ensureRenderer().createApp(...args);
-  const { mount } = app2;
-  app2.mount = (containerOrSelector) => {
+  const app = ensureRenderer().createApp(...args);
+  const { mount } = app;
+  app.mount = (containerOrSelector) => {
     const container = normalizeContainer(containerOrSelector);
     if (!container) return;
-    const component = app2._component;
+    const component = app._component;
     if (!isFunction(component) && !component.render && !component.template) {
       component.template = container.innerHTML;
     }
@@ -6133,7 +6069,7 @@ const createApp = (...args) => {
     }
     return proxy;
   };
-  return app2;
+  return app;
 };
 function resolveRootNamespace(container) {
   if (container instanceof SVGElement) {
@@ -6150,96 +6086,51 @@ function normalizeContainer(container) {
   }
   return container;
 }
-const darkTheme = {
-  background: "#212121",
-  stroke: "#616161",
-  text: "#A0A0A0",
-  textInfo: "#ffffff",
-  activeIconColor: "#0081E0",
-  activeIconOpacity: 1,
-  inactiveIconColor: "#ffffff",
-  inactiveIconOpacity: 0.3,
-  btnBg: "#3B3B3B",
-  btnText: "#FFFFFF",
-  primaryBtnBg: "#005A9D",
-  primaryBtnText: "#ffffff",
-  inputLabel: "#A8A8A8",
-  inputText: "#ffffff",
-  inputBackground: "#2D2D2D"
-};
-const lightTheme = {
-  background: "#ffffff",
-  stroke: "#B6B6B6",
-  text: "#A0A0A0",
-  textInfo: "#494949",
-  activeIconColor: "#0081E0",
-  activeIconOpacity: 1,
-  inactiveIconColor: "#000000",
-  inactiveIconOpacity: 0.2,
-  btnBg: "#EBEBEB",
-  btnText: "#494949",
-  primaryBtnBg: "#005A9D",
-  primaryBtnText: "#ffffff",
-  inputLabel: "#A8A8A8",
-  inputText: "#000000",
-  inputBackground: "#FAFAFA"
-};
-const getTheme = (dark) => {
-  return dark ? darkTheme : lightTheme;
-};
-const _sfc_main$n = /* @__PURE__ */ defineComponent({
+const _sfc_main$m = /* @__PURE__ */ defineComponent({
   __name: "Button",
   props: {
     primary: Boolean,
     isActive: Boolean,
-    style: Object,
-    theme: Object
+    style: Object
   },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("button", {
-        class: normalizeClass(["base-button", { primary: __props.primary, active: __props.isActive }]),
+      return openBlock(), createElementBlock("button", mergeProps({
+        class: ["base-button", { primary: __props.primary, active: __props.isActive }]
+      }, _ctx.$attrs, {
         onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("click"))
-      }, [
-        renderSlot(_ctx.$slots, "default", {}, void 0)
-      ], 2);
+      }), [
+        renderSlot(_ctx.$slots, "default")
+      ], 16);
     };
   }
 });
-const _export_sfc = (sfc, props) => {
-  const target = sfc.__vccOpts || sfc;
-  for (const [key, val] of props) {
-    target[key] = val;
-  }
-  return target;
-};
-const Button = /* @__PURE__ */ _export_sfc(_sfc_main$n, [["__scopeId", "data-v-a9db8c2b"]]);
-const _hoisted_1$e = {
+const _hoisted_1$j = {
   width: "38px",
   height: "32px",
   viewBox: "0 0 38 32"
 };
 const _hoisted_2$8 = {
   stroke: "none",
-  strokeWidth: "1",
+  "stroke-width": "1",
   fill: "none",
-  fillRule: "evenodd"
+  "fill-rule": "evenodd"
 };
 const _hoisted_3$5 = ["fill"];
 const _hoisted_4$2 = ["fill"];
-const _sfc_main$m = {
+const _sfc_main$l = {
   __name: "RegexIcon",
-  props: { theme: Object, isActive: Boolean },
+  props: { isActive: Boolean },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("svg", _hoisted_1$e, [
+      return openBlock(), createElementBlock("svg", _hoisted_1$j, [
         createBaseVNode("g", _hoisted_2$8, [
           createBaseVNode("path", {
             d: "M14.5,23 C13.6578947,23 13,22.3421053 13,21.5 C13,20.6447368 13.6578947,20 14.5,20 C15.3552632,20 16,20.6447368 16,21.5 C16,22.3421053 15.3552632,23 14.5,23 Z",
-            fill: __props.isActive ? __props.theme.activeIconColor : __props.theme.inactiveIconColor
+            fill: __props.isActive ? "var(--active-icon-color)" : "var(--inactive-icon-color)"
           }, null, 8, _hoisted_3$5),
           createBaseVNode("polygon", {
-            fill: __props.isActive ? __props.theme.activeIconColor : __props.theme.inactiveIconColor,
+            fill: __props.isActive ? "var(--active-icon-color)" : "var(--inactive-icon-color)",
             points: "25.1897507 15.4466403 22.1357341 13.5494071 22.3351801 17 20.6648199 17 20.8642659 13.5375494 17.8102493 15.4466403 17 14.0711462 20.2285319 12.5059289 17 10.9525692 17.8102493 9.55335968 20.8642659 11.486166 20.6648199 8 22.3351801 8 22.1357341 11.486166 25.1897507 9.55335968 26 10.9525692 22.7839335 12.5059289 26 14.0711462"
           }, null, 8, _hoisted_4$2)
         ])
@@ -6247,7 +6138,7 @@ const _sfc_main$m = {
     };
   }
 };
-const _hoisted_1$d = {
+const _hoisted_1$i = {
   width: "38px",
   height: "32px",
   viewBox: "0 0 38 32"
@@ -6259,23 +6150,23 @@ const _hoisted_2$7 = {
   fillRule: "evenodd"
 };
 const _hoisted_3$4 = ["fill"];
-const _sfc_main$l = {
+const _sfc_main$k = {
   __name: "CaseSensitiveIcon",
-  props: { theme: Object, isActive: Boolean },
+  props: { isActive: Boolean },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("svg", _hoisted_1$d, [
+      return openBlock(), createElementBlock("svg", _hoisted_1$i, [
         createBaseVNode("g", _hoisted_2$7, [
           createBaseVNode("path", {
             d: "M17.9891077,22.7340909 L16.5730921,18.7008878 L10.9676233,18.7008878 L9.55160769,22.7340909 L7.70590456,22.7340909 L12.9012171,8.64229403 L14.6394983,8.64229403 L19.8348108,22.7340909 L17.9891077,22.7340909 Z M13.7410608,10.7809659 L11.4852014,17.2067472 L16.0555139,17.2067472 L13.7996546,10.7809659 L13.7410608,10.7809659 Z M25.7628454,21.4254972 C27.3937048,21.4254972 28.5948767,20.3219815 28.5948767,18.876669 L28.5948767,18.0661222 L25.9679236,18.2321378 C24.4640173,18.3200284 23.6827673,18.876669 23.6827673,19.8434659 C23.6827673,20.7712003 24.4933142,21.4254972 25.7628454,21.4254972 Z M25.3819861,22.8805753 C23.3214392,22.8805753 21.9542517,21.6403409 21.9542517,19.8434659 C21.9542517,18.095419 23.2921423,17.0602628 25.7726111,16.9137784 L28.5948767,16.7477628 L28.5948767,15.907919 C28.5948767,14.657919 27.7745642,13.9743253 26.2999548,13.9743253 C25.1378454,13.9743253 24.2687048,14.5700284 24.0733923,15.517294 L22.4522986,15.517294 C22.5011267,13.7887784 24.1710486,12.4801847 26.3292517,12.4801847 C28.7413611,12.4801847 30.2940954,13.7594815 30.2940954,15.7614347 L30.2940954,22.7340909 L28.6827673,22.7340909 L28.6827673,20.986044 L28.6437048,20.986044 C28.0675329,22.1090909 26.7980017,22.8805753 25.3819861,22.8805753 Z",
-            fill: __props.isActive ? __props.theme.activeIconColor : __props.theme.inactiveIconColor
+            fill: __props.isActive ? "var(--active-icon-color)" : "var(--inactive-icon-color)"
           }, null, 8, _hoisted_3$4)
         ])
       ]);
     };
   }
 };
-const _hoisted_1$c = {
+const _hoisted_1$h = {
   width: "38px",
   height: "32px",
   viewBox: "0 0 38 32"
@@ -6287,16 +6178,16 @@ const _hoisted_2$6 = {
   fillRule: "evenodd"
 };
 const _hoisted_3$3 = ["fill"];
-const _sfc_main$k = {
+const _sfc_main$j = {
   __name: "WholeWordIcon",
-  props: { theme: Object, isActive: Boolean },
+  props: { isActive: Boolean },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("svg", _hoisted_1$c, [
+      return openBlock(), createElementBlock("svg", _hoisted_1$h, [
         createBaseVNode("g", _hoisted_2$6, [
           createBaseVNode("g", {
             transform: "translate(6.000000, 13.000000)",
-            fill: __props.isActive ? __props.theme.activeIconColor : __props.theme.inactiveIconColor
+            fill: __props.isActive ? "var(--active-icon-color)" : "var(--inactive-icon-color)"
           }, _cache[0] || (_cache[0] = [
             createStaticVNode('<rect x="6" y="0" width="14" height="5"></rect><path d="M7,9 L19,9 L19,7 L20,7 L20,10 L19,10 L7,10 L6,10 L6,7 L7,7 L7,9 Z"></path><rect x="3" y="0" width="2" height="5"></rect><rect x="0" y="0" width="2" height="5"></rect><rect x="21" y="0" width="2" height="5"></rect><rect x="24" y="0" width="2" height="5"></rect>', 6)
           ]), 8, _hoisted_3$3)
@@ -6305,7 +6196,7 @@ const _sfc_main$k = {
     };
   }
 };
-const _hoisted_1$b = {
+const _hoisted_1$g = {
   width: "38px",
   height: "32px",
   viewBox: "0 0 38 32"
@@ -6317,16 +6208,16 @@ const _hoisted_2$5 = {
   fillRule: "evenodd"
 };
 const _hoisted_3$2 = ["fill"];
-const _sfc_main$j = {
+const _sfc_main$i = {
   __name: "SelectionIcon",
-  props: { theme: Object, isActive: Boolean },
+  props: { isActive: Boolean },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("svg", _hoisted_1$b, [
+      return openBlock(), createElementBlock("svg", _hoisted_1$g, [
         createBaseVNode("g", _hoisted_2$5, [
           createBaseVNode("g", {
             transform: "translate(6.000000, 9.500000)",
-            fill: __props.isActive ? __props.theme.activeIconColor : __props.theme.inactiveIconColor
+            fill: __props.isActive ? "var(--active-icon-color)" : "var(--inactive-icon-color)"
           }, _cache[0] || (_cache[0] = [
             createStaticVNode('<rect x="0" y="0" width="2" height="5"></rect><rect x="3" y="0" width="2" height="5"></rect><rect x="6" y="0" width="2" height="5"></rect><rect x="9" y="0" width="17" height="5"></rect><rect x="24" y="8" width="2" height="5"></rect><rect x="21" y="8" width="2" height="5"></rect><rect x="18" y="8" width="2" height="5"></rect><rect x="0" y="8" width="17" height="5"></rect>', 8)
           ]), 8, _hoisted_3$2)
@@ -6335,21 +6226,21 @@ const _sfc_main$j = {
     };
   }
 };
-const _hoisted_1$a = {
+const _hoisted_1$f = {
   width: "38px",
   height: "32px",
   viewBox: "0 0 38 32"
 };
 const _hoisted_2$4 = ["fill"];
-const _sfc_main$i = {
+const _sfc_main$h = {
   __name: "PageIcon",
-  props: { theme: Object, isActive: Boolean },
+  props: { isActive: Boolean },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("svg", _hoisted_1$a, [
+      return openBlock(), createElementBlock("svg", _hoisted_1$f, [
         createBaseVNode("g", {
           stroke: "none",
-          fill: __props.isActive ? __props.theme.activeIconColor : __props.theme.inactiveIconColor,
+          fill: __props.isActive ? "var(--active-icon-color)" : "var(--inactive-icon-color)",
           fillRule: "nonzero"
         }, _cache[0] || (_cache[0] = [
           createBaseVNode("g", null, [
@@ -6360,21 +6251,21 @@ const _sfc_main$i = {
     };
   }
 };
-const _hoisted_1$9 = {
+const _hoisted_1$e = {
   width: "38px",
   height: "32px",
   viewBox: "0 0 38 32"
 };
 const _hoisted_2$3 = ["fill"];
-const _sfc_main$h = {
+const _sfc_main$g = {
   __name: "DocumentIcon",
-  props: { theme: Object, isActive: Boolean },
+  props: { isActive: Boolean },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("svg", _hoisted_1$9, [
+      return openBlock(), createElementBlock("svg", _hoisted_1$e, [
         createBaseVNode("g", {
           stroke: "none",
-          fill: __props.isActive ? __props.theme.activeIconColor : __props.theme.inactiveIconColor,
+          fill: __props.isActive ? "var(--active-icon-color)" : "var(--inactive-icon-color)",
           fillRule: "nonzero"
         }, _cache[0] || (_cache[0] = [
           createBaseVNode("g", null, [
@@ -6390,7 +6281,7 @@ const version = "2.12.2";
 const pack = {
   version
 };
-const _hoisted_1$8 = { class: "help-icons-container" };
+const _hoisted_1$d = { class: "help-icons-container" };
 const _hoisted_2$2 = { class: "help-icon" };
 const _hoisted_3$1 = { class: "help-icons-container" };
 const _hoisted_4$1 = { class: "help-icon" };
@@ -6404,37 +6295,19 @@ const _hoisted_11 = { class: "help-icons-container" };
 const _hoisted_12 = { class: "help-icon" };
 const _hoisted_13 = { class: "btn-help-container" };
 const _hoisted_14 = { class: "btn-help-container" };
-const _sfc_main$g = {
+const _sfc_main$f = {
   __name: "Help",
   props: {
     isActive: Boolean,
-    theme: Object,
     close: Function,
     resetPref: Function
   },
   setup(__props) {
     const version2 = computed(() => pack.version);
     return (_ctx, _cache) => {
-      var _a, _b;
       return openBlock(), createElementBlock("div", {
         class: "help-page",
-        style: normalizeStyle({
-          position: "absolute",
-          top: __props.isActive ? "0" : "240px",
-          width: "100%",
-          overflow: "scroll",
-          height: "218px",
-          padding: "14px 16px 16px 16px",
-          background: (_a = __props.theme) == null ? void 0 : _a.background,
-          color: (_b = __props.theme) == null ? void 0 : _b.text,
-          zIndex: 100,
-          transition: "top 0.15s ease-in-out",
-          marginBottom: "32px",
-          boxSizing: "border-box",
-          MozBoxSizing: "border-box",
-          WebkitBoxSizing: "border-box",
-          fontSize: "small"
-        })
+        style: normalizeStyle({ top: __props.isActive ? "0" : "240px", display: __props.isActive ? "block" : "none" })
       }, [
         createBaseVNode("label", {
           class: "top-label",
@@ -6452,30 +6325,21 @@ const _sfc_main$g = {
         ], -1)),
         _cache[11] || (_cache[11] = createBaseVNode("p", null, 'New Shortcut : "cmd option shift f"', -1)),
         _cache[12] || (_cache[12] = createBaseVNode("h3", null, "Options to find", -1)),
-        createBaseVNode("div", _hoisted_1$8, [
+        createBaseVNode("div", _hoisted_1$d, [
           createBaseVNode("div", _hoisted_2$2, [
-            createVNode(_sfc_main$m, {
-              theme: __props.theme,
-              isActive: true
-            }, null, 8, ["theme"])
+            createVNode(_sfc_main$l, { isActive: true })
           ]),
           _cache[2] || (_cache[2] = createBaseVNode("div", { class: "help-icon-description" }, "Regex (Regular expressions)*", -1))
         ]),
         createBaseVNode("div", _hoisted_3$1, [
           createBaseVNode("div", _hoisted_4$1, [
-            createVNode(_sfc_main$l, {
-              theme: __props.theme,
-              isActive: true
-            }, null, 8, ["theme"])
+            createVNode(_sfc_main$k, { isActive: true })
           ]),
           _cache[3] || (_cache[3] = createBaseVNode("div", { class: "help-icon-description" }, "Case Sensitive (on)/ Case Insensitive (off)", -1))
         ]),
         createBaseVNode("div", _hoisted_5, [
           createBaseVNode("div", _hoisted_6, [
-            createVNode(_sfc_main$k, {
-              theme: __props.theme,
-              isActive: true
-            }, null, 8, ["theme"])
+            createVNode(_sfc_main$j, { isActive: true })
           ]),
           _cache[4] || (_cache[4] = createBaseVNode("div", { class: "help-icon-description" }, "Whole Word", -1))
         ]),
@@ -6483,36 +6347,26 @@ const _sfc_main$g = {
         _cache[14] || (_cache[14] = createBaseVNode("h3", null, "Replace context", -1)),
         createBaseVNode("div", _hoisted_7, [
           createBaseVNode("div", _hoisted_8, [
-            createVNode(_sfc_main$j, {
-              theme: __props.theme,
-              isActive: true
-            }, null, 8, ["theme"])
+            createVNode(_sfc_main$i, { isActive: true })
           ]),
           _cache[5] || (_cache[5] = createBaseVNode("div", { class: "help-icon-description" }, "Selection (visible if a selection is active)", -1))
         ]),
         createBaseVNode("div", _hoisted_9, [
           createBaseVNode("div", _hoisted_10, [
-            createVNode(_sfc_main$i, {
-              theme: __props.theme,
-              isActive: true
-            }, null, 8, ["theme"])
+            createVNode(_sfc_main$h, { isActive: true })
           ]),
           _cache[6] || (_cache[6] = createBaseVNode("div", { class: "help-icon-description" }, "Current page", -1))
         ]),
         createBaseVNode("div", _hoisted_11, [
           createBaseVNode("div", _hoisted_12, [
-            createVNode(_sfc_main$h, {
-              theme: __props.theme,
-              isActive: true
-            }, null, 8, ["theme"])
+            createVNode(_sfc_main$g, { isActive: true })
           ]),
           _cache[7] || (_cache[7] = createBaseVNode("div", { class: "help-icon-description" }, "All pages of a document", -1))
         ]),
-        _cache[15] || (_cache[15] = createStaticVNode('<p data-v-079eb176>By default Find and Replace don’t replace string of symbols master except if you are in selection mode or on the “Symbols” named page.</p><h3 data-v-079eb176>Know limitation</h3><p data-v-079eb176>Backslash not allowed in the replace input.</p><p data-v-079eb176>Exit the text editon mode before to replace string</p><h3 data-v-079eb176>Regex (Regular expressions)</h3><p data-v-079eb176>Get the Regex Power! <span style="font-family:emoji;" data-v-079eb176>⚡️</span></p><p data-v-079eb176>Regular expressions are patterns used to match character combinations in strings.</p><p data-v-079eb176><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions" data-v-079eb176>MDN Regular Expressions Guide</a></p><p data-v-079eb176><a href="https://javascript.info/regular-expressions" data-v-079eb176>Javascript.info Regular Expressions Guide</a></p><h4 data-v-079eb176>Some Examples</h4><p data-v-079eb176>The power of search and replace with regex.</p><p data-v-079eb176>Let&#39;s use the search and replace example from above:</p><h4 data-v-079eb176>Convert &quot;John Smith&quot; to &quot;Smith John&quot;</h4><p data-v-079eb176>Find</p><pre data-v-079eb176>(\\w+)\\s+(\\w+)</pre><p data-v-079eb176>Replace with</p><pre data-v-079eb176>$2 $1</pre><p data-v-079eb176>Result: Smith John.</p><h4 data-v-079eb176>Replace all double spaces</h4><p data-v-079eb176>Find</p><pre data-v-079eb176>\\s{2,}</pre><p data-v-079eb176>Replace with</p><pre data-v-079eb176>(one space)</pre><h3 data-v-079eb176>Preference Settings</h3><p data-v-079eb176>Your last search and mode (dark/light) are saved.</p>', 25)),
+        _cache[15] || (_cache[15] = createStaticVNode('<p>By default Find and Replace don’t replace string of symbols master except if you are in selection mode or on the “Symbols” named page.</p><h3>Know limitation</h3><p>Backslash not allowed in the replace input.</p><p>Exit the text editon mode before to replace string</p><h3>Regex (Regular expressions)</h3><p>Get the Regex Power! <span style="font-family:emoji;">⚡️</span></p><p>Regular expressions are patterns used to match character combinations in strings.</p><p><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions">MDN Regular Expressions Guide</a></p><p><a href="https://javascript.info/regular-expressions">Javascript.info Regular Expressions Guide</a></p><h4>Some Examples</h4><p>The power of search and replace with regex.</p><p>Let&#39;s use the search and replace example from above:</p><h4>Convert &quot;John Smith&quot; to &quot;Smith John&quot;</h4><p>Find</p><pre>(\\w+)\\s+(\\w+)</pre><p>Replace with</p><pre>$2 $1</pre><p>Result: Smith John.</p><h4>Replace all double spaces</h4><p>Find</p><pre>\\s{2,}</pre><p>Replace with</p><pre>(one space)</pre><h3>Preference Settings</h3><p>Your last search and mode (dark/light) are saved.</p>', 25)),
         createBaseVNode("div", _hoisted_13, [
-          createVNode(Button, {
+          createVNode(_sfc_main$m, {
             onClick: __props.resetPref,
-            theme: __props.theme,
             isActive: true
           }, {
             default: withCtx(() => _cache[8] || (_cache[8] = [
@@ -6520,7 +6374,7 @@ const _sfc_main$g = {
             ])),
             _: 1,
             __: [8]
-          }, 8, ["onClick", "theme"])
+          }, 8, ["onClick"])
         ]),
         _cache[16] || (_cache[16] = createBaseVNode("p", null, "and more...", -1)),
         _cache[17] || (_cache[17] = createBaseVNode("h3", null, "Say Hello", -1)),
@@ -6529,9 +6383,8 @@ const _sfc_main$g = {
           createBaseVNode("a", { href: "https://github.com/icai?ref=sketch" }, "Github: @icai")
         ], -1)),
         createBaseVNode("div", _hoisted_14, [
-          createVNode(Button, {
+          createVNode(_sfc_main$m, {
             onClick: __props.close,
-            theme: __props.theme,
             primary: "",
             isActive: true
           }, {
@@ -6540,14 +6393,13 @@ const _sfc_main$g = {
             ])),
             _: 1,
             __: [9]
-          }, 8, ["onClick", "theme"])
+          }, 8, ["onClick"])
         ])
       ], 4);
     };
   }
 };
-const Help = /* @__PURE__ */ _export_sfc(_sfc_main$g, [["__scopeId", "data-v-079eb176"]]);
-const _hoisted_1$7 = {
+const _hoisted_1$c = {
   width: "24px",
   height: "30px",
   viewBox: "0 0 24 30"
@@ -6555,12 +6407,12 @@ const _hoisted_1$7 = {
 const _hoisted_2$1 = ["fill"];
 const _hoisted_3 = ["fill"];
 const _hoisted_4 = ["fill"];
-const _sfc_main$f = {
+const _sfc_main$e = {
   __name: "LoadingIcon",
   props: { color: String },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("svg", _hoisted_1$7, [
+      return openBlock(), createElementBlock("svg", _hoisted_1$c, [
         createBaseVNode("rect", {
           x: "0",
           y: "10",
@@ -6664,14 +6516,13 @@ const _sfc_main$f = {
     };
   }
 };
-const _hoisted_1$6 = { class: "loading-container" };
+const _hoisted_1$b = { class: "loading-container" };
 const _hoisted_2 = { class: "btn-container" };
-const _sfc_main$e = /* @__PURE__ */ defineComponent({
+const _sfc_main$d = /* @__PURE__ */ defineComponent({
   __name: "Loading",
   props: {
     resetPref: { type: Function },
-    isActive: { type: Boolean },
-    theme: {}
+    isActive: { type: Boolean }
   },
   setup(__props) {
     const props = __props;
@@ -6679,16 +6530,13 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", {
         class: "loading-page",
-        style: normalizeStyle({ top: topValue.value, backgroundColor: _ctx.theme.background, color: _ctx.theme.text })
+        style: normalizeStyle({ top: topValue.value, display: _ctx.isActive ? "block" : "none" })
       }, [
-        createBaseVNode("div", _hoisted_1$6, [
-          createVNode(_sfc_main$f, {
-            color: _ctx.theme.activeIconColor
-          }, null, 8, ["color"])
+        createBaseVNode("div", _hoisted_1$b, [
+          createVNode(_sfc_main$e, { color: "var(--active-icon-color)" })
         ]),
         createBaseVNode("div", _hoisted_2, [
-          createVNode(Button, {
-            theme: _ctx.theme,
+          createVNode(_sfc_main$m, {
             isActive: true,
             onClick: _ctx.resetPref
           }, {
@@ -6697,219 +6545,166 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
             ])),
             _: 1,
             __: [0]
-          }, 8, ["theme", "onClick"])
+          }, 8, ["onClick"])
         ]),
         _cache[1] || (_cache[1] = createBaseVNode("div", { class: "msg" }, "Sketch Find and Replace", -1))
       ], 4);
     };
   }
 });
-const Loading = /* @__PURE__ */ _export_sfc(_sfc_main$e, [["__scopeId", "data-v-6ae7f20f"]]);
-const _sfc_main$d = {
-  __name: "GlobalStyle",
-  props: { theme: Object },
-  setup(__props) {
-    useCssVars((_ctx) => ({
-      "e4cbec1a": __props.theme.background,
-      "7bded37e": __props.theme.color
-    }));
-    return () => {
-    };
-  }
-};
+const _hoisted_1$a = { class: "page" };
 const _sfc_main$c = {
   __name: "Page",
-  props: { theme: Object },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", {
-        class: "page",
-        style: normalizeStyle({ background: __props.theme.background, color: __props.theme.color })
-      }, [
-        renderSlot(_ctx.$slots, "default", {}, void 0)
-      ], 4);
+      return openBlock(), createElementBlock("div", _hoisted_1$a, [
+        renderSlot(_ctx.$slots, "default")
+      ]);
     };
   }
 };
-const Page = /* @__PURE__ */ _export_sfc(_sfc_main$c, [["__scopeId", "data-v-57e49174"]]);
-const _hoisted_1$5 = { class: "row" };
+const _export_sfc = (sfc, props) => {
+  const target = sfc.__vccOpts || sfc;
+  for (const [key, val] of props) {
+    target[key] = val;
+  }
+  return target;
+};
+const _hoisted_1$9 = { class: "row" };
 const _sfc_main$b = {
   __name: "Row",
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$5, [
-        renderSlot(_ctx.$slots, "default", {}, void 0)
+      return openBlock(), createElementBlock("div", _hoisted_1$9, [
+        renderSlot(_ctx.$slots, "default", {}, void 0, true)
       ]);
     };
   }
 };
-const Row = /* @__PURE__ */ _export_sfc(_sfc_main$b, [["__scopeId", "data-v-5825e034"]]);
-const _hoisted_1$4 = { class: "row-group" };
+const Row = /* @__PURE__ */ _export_sfc(_sfc_main$b, [["__scopeId", "data-v-eec5a2ad"]]);
+const _hoisted_1$8 = { class: "row-group" };
 const _sfc_main$a = {
   __name: "RowGroup",
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$4, [
-        renderSlot(_ctx.$slots, "default", {}, void 0)
+      return openBlock(), createElementBlock("div", _hoisted_1$8, [
+        renderSlot(_ctx.$slots, "default")
       ]);
     };
   }
 };
-const RowGroup = /* @__PURE__ */ _export_sfc(_sfc_main$a, [["__scopeId", "data-v-2e6fef23"]]);
-const _hoisted_1$3 = { class: "info-row-group" };
+const _hoisted_1$7 = { class: "info-row-group" };
 const _sfc_main$9 = {
   __name: "InfoRowGroup",
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$3, [
-        renderSlot(_ctx.$slots, "default", {}, void 0)
+      return openBlock(), createElementBlock("div", _hoisted_1$7, [
+        renderSlot(_ctx.$slots, "default")
       ]);
     };
   }
 };
-const InfoRowGroup = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["__scopeId", "data-v-f5b6c63f"]]);
-const _hoisted_1$2 = { class: "btn-group" };
+const _hoisted_1$6 = { class: "btn-group" };
 const _sfc_main$8 = {
   __name: "BtnGroup",
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$2, [
-        renderSlot(_ctx.$slots, "default", {}, void 0)
+      return openBlock(), createElementBlock("div", _hoisted_1$6, [
+        renderSlot(_ctx.$slots, "default")
       ]);
     };
   }
 };
-const BtnGroup = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["__scopeId", "data-v-07dba1d6"]]);
+const _hoisted_1$5 = { class: "btn-text" };
 const _sfc_main$7 = {
   __name: "BtnText",
-  props: {
-    style: Object,
-    theme: Object
-  },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("span", {
-        class: "btn-text",
-        style: normalizeStyle(__props.style),
-        onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("click"))
-      }, [
-        renderSlot(_ctx.$slots, "default", {}, void 0)
-      ], 4);
+      return openBlock(), createElementBlock("span", _hoisted_1$5, [
+        renderSlot(_ctx.$slots, "default")
+      ]);
     };
   }
 };
-const BtnText = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["__scopeId", "data-v-0a1653c4"]]);
 const _sfc_main$6 = {
   __name: "BtnInage",
   props: {
-    isActive: Boolean,
-    style: Object,
-    theme: Object
+    isActive: Boolean
   },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", {
-        class: normalizeClass(["btn-inage", { active: __props.isActive }]),
-        onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("click")),
-        style: normalizeStyle(__props.style)
-      }, [
-        renderSlot(_ctx.$slots, "default", {}, void 0)
-      ], 6);
+      return openBlock(), createElementBlock("div", mergeProps({
+        class: "btn-inage",
+        style: {
+          opacity: __props.isActive ? "var(--active-icon-opacity, 1.0)" : "var(--inactive-icon-opacity, 0.2)"
+        }
+      }, _ctx.$attrs), [
+        renderSlot(_ctx.$slots, "default", {}, void 0, true)
+      ], 16);
     };
   }
 };
-const BtnInage = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["__scopeId", "data-v-9460b885"]]);
-const _hoisted_1$1 = ["value"];
+const BtnInage = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["__scopeId", "data-v-d68d2792"]]);
+const _hoisted_1$4 = ["value"];
 const _sfc_main$5 = {
   __name: "Input",
-  props: {
-    modelValue: String,
-    theme: Object
-  },
   setup(__props, { expose: __expose }) {
-    const props = __props;
     const inputRef = ref(null);
-    watch(() => props.modelValue, (val) => {
-      if (inputRef.value && inputRef.value.value !== val) {
-        inputRef.value.value = val;
-      }
-    });
     __expose({
       focus: () => {
         if (inputRef.value) inputRef.value.focus();
-      },
-      inputRef
+      }
     });
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("input", mergeProps({
         class: "input",
-        value: __props.modelValue,
+        value: _ctx.modelValue,
         onInput: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("update:modelValue", $event.target.value))
       }, _ctx.$attrs, {
         ref_key: "inputRef",
         ref: inputRef
-      }), null, 16, _hoisted_1$1);
+      }), null, 16, _hoisted_1$4);
     };
   }
 };
-const Input = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["__scopeId", "data-v-a1afdb7d"]]);
-const _hoisted_1 = { class: "action-bar" };
+const _hoisted_1$3 = { class: "action-bar" };
 const _sfc_main$4 = {
   __name: "ActionBar",
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1, [
-        renderSlot(_ctx.$slots, "default", {}, void 0)
+      return openBlock(), createElementBlock("div", _hoisted_1$3, [
+        renderSlot(_ctx.$slots, "default")
       ]);
     };
   }
 };
-const ActionBar = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["__scopeId", "data-v-848746bf"]]);
-const _sfc_main$3 = {
-  __name: "InputLabel",
-  props: { style: Object, theme: Object },
-  setup(__props) {
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("label", {
-        class: "input-label",
-        style: normalizeStyle(__props.style)
-      }, [
-        renderSlot(_ctx.$slots, "default", {}, void 0)
-      ], 4);
-    };
-  }
-};
-const InputLabel = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["__scopeId", "data-v-d0b6d083"]]);
+const _sfc_main$3 = {};
+const _hoisted_1$2 = { class: "input-label" };
+function _sfc_render$1(_ctx, _cache) {
+  return openBlock(), createElementBlock("label", _hoisted_1$2, [
+    renderSlot(_ctx.$slots, "default")
+  ]);
+}
+const InputLabel = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$1]]);
+const _hoisted_1$1 = { class: "info-string" };
 const _sfc_main$2 = {
   __name: "InfoString",
-  props: { style: Object, theme: Object },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("span", {
-        class: "info-string",
-        style: normalizeStyle(__props.style)
-      }, [
-        renderSlot(_ctx.$slots, "default", {}, void 0)
-      ], 4);
+      return openBlock(), createElementBlock("span", _hoisted_1$1, [
+        renderSlot(_ctx.$slots, "default")
+      ]);
     };
   }
 };
-const InfoString = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["__scopeId", "data-v-3c67381b"]]);
-const _sfc_main$1 = {
-  __name: "InfoStringIn",
-  props: { style: Object, theme: Object },
-  setup(__props) {
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("span", {
-        class: "info-string-in",
-        style: normalizeStyle(__props.style)
-      }, [
-        renderSlot(_ctx.$slots, "default", {}, void 0)
-      ], 4);
-    };
-  }
-};
-const InfoStringIn = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["__scopeId", "data-v-1170697a"]]);
+const _sfc_main$1 = {};
+const _hoisted_1 = { class: "info-string-in" };
+function _sfc_render(_ctx, _cache) {
+  return openBlock(), createElementBlock("span", _hoisted_1, [
+    renderSlot(_ctx.$slots, "default")
+  ]);
+}
+const InfoStringIn = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render]]);
 const _sfc_main = {
   __name: "App",
   setup(__props) {
@@ -6926,7 +6721,6 @@ const _sfc_main = {
     const mounted = ref(false);
     const findInputRef = ref(null);
     const replaceInputRef = ref(null);
-    const theme = computed(() => getTheme(darkMode.value));
     onMounted(() => {
       window.SetSettings = (json) => {
         const state = JSON.parse(json);
@@ -6944,6 +6738,7 @@ const _sfc_main = {
         nextTick(() => {
           findInputRef.value && findInputRef.value.focus();
         });
+        document.body.setAttribute("data-theme", state.darkMode ? "dark" : "light");
       };
       setTimeout(() => {
         findInputRef.value && findInputRef.value.focus();
@@ -6951,9 +6746,11 @@ const _sfc_main = {
       }, 5e3);
       document.body.style.margin = 0;
       document.body.style.padding = 0;
+      document.body.setAttribute("data-theme", darkMode.value ? "dark" : "light");
     });
     function changeMode() {
       darkMode.value = !darkMode.value;
+      document.body.setAttribute("data-theme", darkMode.value ? "dark" : "light");
       window.postMessage("setDarkMode", darkMode.value);
     }
     function handleRegex() {
@@ -7060,7 +6857,6 @@ const _sfc_main = {
     }
     function findInputHandleOnChange(event) {
       findString.value = event.target.value;
-      replaceString.value = replaceInputRef.value ? replaceInputRef.value.value.split("\\").join("") : "";
     }
     function replaceInputHandleKeyPress(event) {
       if (event.key === "Enter") {
@@ -7068,7 +6864,6 @@ const _sfc_main = {
       }
     }
     function replaceInputHandleOnChange(event) {
-      findString.value = findInputRef.value ? findInputRef.value.value : "";
       replaceString.value = event.target.value.split("\\").join("");
     }
     function closeWindow() {
@@ -7100,22 +6895,20 @@ const _sfc_main = {
     }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock(Fragment, null, [
-        createVNode(ActionBar, null, {
+        createVNode(_sfc_main$4, null, {
           default: withCtx(() => [
-            createVNode(BtnGroup, null, {
+            createVNode(_sfc_main$8, null, {
               default: withCtx(() => [
-                createVNode(BtnText, {
+                createVNode(_sfc_main$7, {
                   style: { cursor: "pointer" },
-                  theme: theme.value,
                   onClick: changeMode
                 }, {
                   default: withCtx(() => [
                     createTextVNode(toDisplayString(darkMode.value ? "Light Mode" : "Dark Mode"), 1)
                   ]),
                   _: 1
-                }, 8, ["theme"]),
-                createVNode(BtnText, {
-                  theme: theme.value,
+                }),
+                createVNode(_sfc_main$7, {
                   style: { cursor: "help" },
                   onClick: toogleHelp
                 }, {
@@ -7124,33 +6917,32 @@ const _sfc_main = {
                   ])),
                   _: 1,
                   __: [0]
-                }, 8, ["theme"])
+                })
               ]),
               _: 1
             })
           ]),
           _: 1
         }),
-        createVNode(Page, { theme: theme.value }, {
+        createVNode(_sfc_main$c, null, {
           default: withCtx(() => [
-            createVNode(RowGroup, null, {
+            createVNode(_sfc_main$a, null, {
               default: withCtx(() => [
                 createVNode(Row, null, {
                   default: withCtx(() => [
-                    createVNode(InputLabel, { theme: theme.value }, {
+                    createVNode(InputLabel, null, {
                       default: withCtx(() => _cache[1] || (_cache[1] = [
                         createTextVNode("FIND")
                       ])),
                       _: 1,
                       __: [1]
-                    }, 8, ["theme"])
+                    })
                   ]),
                   _: 1
                 }),
                 createVNode(Row, null, {
                   default: withCtx(() => [
-                    createVNode(Input, {
-                      theme: theme.value,
+                    createVNode(_sfc_main$5, {
                       value: findString.value,
                       onKeypress: findInputHandleKeyPress,
                       onInput: findInputHandleOnChange,
@@ -7160,48 +6952,36 @@ const _sfc_main = {
                       autocorrect: "off",
                       autocapitalize: "off",
                       spellcheck: "false"
-                    }, null, 8, ["theme", "value"]),
-                    createVNode(BtnGroup, null, {
+                    }, null, 8, ["value"]),
+                    createVNode(_sfc_main$8, null, {
                       default: withCtx(() => [
                         createVNode(BtnInage, {
                           onClick: handleRegex,
-                          theme: theme.value,
                           isActive: regexActive.value
                         }, {
                           default: withCtx(() => [
-                            createVNode(_sfc_main$m, {
-                              theme: theme.value,
-                              isActive: regexActive.value
-                            }, null, 8, ["theme", "isActive"])
+                            createVNode(_sfc_main$l, { isActive: regexActive.value }, null, 8, ["isActive"])
                           ]),
                           _: 1
-                        }, 8, ["theme", "isActive"]),
+                        }, 8, ["isActive"]),
                         createVNode(BtnInage, {
                           onClick: handleCaseSensitive,
-                          theme: theme.value,
                           isActive: caseSensitive.value
                         }, {
                           default: withCtx(() => [
-                            createVNode(_sfc_main$l, {
-                              theme: theme.value,
-                              isActive: caseSensitive.value
-                            }, null, 8, ["theme", "isActive"])
+                            createVNode(_sfc_main$k, { isActive: caseSensitive.value }, null, 8, ["isActive"])
                           ]),
                           _: 1
-                        }, 8, ["theme", "isActive"]),
+                        }, 8, ["isActive"]),
                         createVNode(BtnInage, {
                           onClick: handleWholeWord,
-                          theme: theme.value,
                           isActive: wholeWord.value
                         }, {
                           default: withCtx(() => [
-                            createVNode(_sfc_main$k, {
-                              theme: theme.value,
-                              isActive: wholeWord.value
-                            }, null, 8, ["theme", "isActive"])
+                            createVNode(_sfc_main$j, { isActive: wholeWord.value }, null, 8, ["isActive"])
                           ]),
                           _: 1
-                        }, 8, ["theme", "isActive"])
+                        }, 8, ["isActive"])
                       ]),
                       _: 1
                     })
@@ -7211,24 +6991,23 @@ const _sfc_main = {
               ]),
               _: 1
             }),
-            createVNode(RowGroup, null, {
+            createVNode(_sfc_main$a, null, {
               default: withCtx(() => [
                 createVNode(Row, null, {
                   default: withCtx(() => [
-                    createVNode(InputLabel, { theme: theme.value }, {
+                    createVNode(InputLabel, null, {
                       default: withCtx(() => _cache[2] || (_cache[2] = [
                         createTextVNode("REPLACE BY")
                       ])),
                       _: 1,
                       __: [2]
-                    }, 8, ["theme"])
+                    })
                   ]),
                   _: 1
                 }),
                 createVNode(Row, null, {
                   default: withCtx(() => [
-                    createVNode(Input, {
-                      theme: theme.value,
+                    createVNode(_sfc_main$5, {
                       value: replaceString.value,
                       onKeypress: replaceInputHandleKeyPress,
                       onInput: replaceInputHandleOnChange,
@@ -7238,49 +7017,43 @@ const _sfc_main = {
                       autocorrect: "off",
                       autocapitalize: "off",
                       spellcheck: "false"
-                    }, null, 8, ["theme", "value"]),
-                    createVNode(BtnGroup, null, {
+                    }, null, 8, ["value"]),
+                    createVNode(_sfc_main$8, null, {
                       default: withCtx(() => [
                         selection.value ? (openBlock(), createBlock(BtnInage, {
                           key: 0,
                           onClick: handleSelection,
-                          theme: theme.value,
                           isActive: findMode.value === 1
                         }, {
                           default: withCtx(() => [
-                            createVNode(_sfc_main$j, {
-                              theme: theme.value,
+                            createVNode(_sfc_main$i, {
                               isActive: findMode.value === 1
-                            }, null, 8, ["theme", "isActive"])
+                            }, null, 8, ["isActive"])
                           ]),
                           _: 1
-                        }, 8, ["theme", "isActive"])) : createCommentVNode("", true),
+                        }, 8, ["isActive"])) : createCommentVNode("", true),
                         createVNode(BtnInage, {
                           onClick: handlePage,
-                          theme: theme.value,
                           isActive: findMode.value === 2
                         }, {
                           default: withCtx(() => [
-                            createVNode(_sfc_main$i, {
-                              theme: theme.value,
+                            createVNode(_sfc_main$h, {
                               isActive: findMode.value === 2
-                            }, null, 8, ["theme", "isActive"])
+                            }, null, 8, ["isActive"])
                           ]),
                           _: 1
-                        }, 8, ["theme", "isActive"]),
+                        }, 8, ["isActive"]),
                         createVNode(BtnInage, {
                           onClick: handleDocument,
-                          theme: theme.value,
                           isActive: findMode.value === 3
                         }, {
                           default: withCtx(() => [
-                            createVNode(_sfc_main$h, {
-                              theme: theme.value,
+                            createVNode(_sfc_main$g, {
                               isActive: findMode.value === 3
-                            }, null, 8, ["theme", "isActive"])
+                            }, null, 8, ["isActive"])
                           ]),
                           _: 1
-                        }, 8, ["theme", "isActive"])
+                        }, 8, ["isActive"])
                       ]),
                       _: 1
                     })
@@ -7290,12 +7063,12 @@ const _sfc_main = {
               ]),
               _: 1
             }),
-            createVNode(InfoRowGroup, null, {
+            createVNode(_sfc_main$9, null, {
               default: withCtx(() => [
-                createVNode(InfoString, { theme: theme.value }, {
+                createVNode(_sfc_main$2, null, {
                   default: withCtx(() => [
                     _cache[3] || (_cache[3] = createTextVNode(" Options: ")),
-                    createVNode(InfoStringIn, { theme: theme.value }, {
+                    createVNode(InfoStringIn, null, {
                       default: withCtx(() => [
                         createTextVNode(toDisplayString(regexActive.value ? " Regex, " : " ") + " " + toDisplayString(caseSensitive.value ? "Case Sensitive, " : "Case Insensitive, ") + " " + toDisplayString(wholeWord.value ? "Whole Word, " : "") + " in the ", 1),
                         findMode.value === 1 ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
@@ -7309,21 +7082,20 @@ const _sfc_main = {
                         ], 64)) : createCommentVNode("", true)
                       ]),
                       _: 1
-                    }, 8, ["theme"])
+                    })
                   ]),
                   _: 1,
                   __: [3]
-                }, 8, ["theme"])
+                })
               ]),
               _: 1
             }),
-            createVNode(RowGroup, null, {
+            createVNode(_sfc_main$a, null, {
               default: withCtx(() => [
                 createVNode(Row, null, {
                   default: withCtx(() => [
-                    createVNode(Button, {
+                    createVNode(_sfc_main$m, {
                       onClick: closeWindow,
-                      theme: theme.value,
                       isActive: true
                     }, {
                       default: withCtx(() => _cache[4] || (_cache[4] = [
@@ -7331,11 +7103,10 @@ const _sfc_main = {
                       ])),
                       _: 1,
                       __: [4]
-                    }, 8, ["theme"]),
-                    createVNode(Button, {
+                    }),
+                    createVNode(_sfc_main$m, {
                       onClick: replaceFn,
                       primary: "",
-                      theme: theme.value,
                       isActive: !replaceStart.value
                     }, {
                       default: withCtx(() => _cache[5] || (_cache[5] = [
@@ -7343,7 +7114,7 @@ const _sfc_main = {
                       ])),
                       _: 1,
                       __: [5]
-                    }, 8, ["theme", "isActive"])
+                    }, 8, ["isActive"])
                   ]),
                   _: 1
                 })
@@ -7352,33 +7123,36 @@ const _sfc_main = {
             })
           ]),
           _: 1
-        }, 8, ["theme"]),
-        createVNode(Help, {
+        }),
+        createVNode(_sfc_main$f, {
           isActive: helpActive.value,
-          theme: theme.value,
           close: toogleHelp,
           resetPref
-        }, null, 8, ["isActive", "theme"]),
-        createVNode(Loading, {
+        }, null, 8, ["isActive"]),
+        createVNode(_sfc_main$d, {
           isActive: replaceStart.value || !mounted.value,
-          theme: theme.value,
           resetPref
-        }, null, 8, ["isActive", "theme"]),
-        createVNode(_sfc_main$d, { theme: theme.value }, null, 8, ["theme"])
+        }, null, 8, ["isActive"])
       ], 64);
     };
   }
 };
-if (typeof window$1 === "undefined") {
-  var window$1 = {};
-}
-window$1.settings = {};
-window$1.updateData = function(json) {
-  if (typeof window$1.SetSettings === "function") {
-    window$1.SetSettings(json);
+window.settings = {};
+window.updateData = function(json) {
+  if (typeof window.SetSettings === "function") {
+    window.SetSettings(json);
   } else {
-    setTimeout(() => window$1.updateData(json), 100);
+    setTimeout(() => window.updateData(json), 100);
   }
 };
-const app = createApp(_sfc_main);
-app.mount("#root");
+const initApp = () => {
+  const app = createApp(_sfc_main);
+  app.mount("#root");
+};
+setTimeout(() => {
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    initApp();
+  } else {
+    document.addEventListener("DOMContentLoaded", initApp);
+  }
+}, 0);

@@ -3,6 +3,7 @@
   <button
     class="base-button"
     :class="{ primary, active: isActive }"
+    v-bind="$attrs"
     @click="$emit('click')"
   >
     <slot />
@@ -13,12 +14,11 @@
 defineProps({
   primary: Boolean,
   isActive: Boolean,
-  style: Object,
-  theme: Object
+  style: Object
 })
 </script>
 
-<style scoped>
+<style>
 .base-button {
   flex-grow: 1;
   border: 0;

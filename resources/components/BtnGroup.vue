@@ -8,7 +8,7 @@
 // No script needed for simple wrapper
 </script>
 
-<style scoped>
+<style>
 .btn-group {
   display: flex;
   justify-content: space-between;

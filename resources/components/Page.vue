@@ -1,18 +1,20 @@
 <template>
-  <div class="page" :style="{ background: theme.background, color: theme.color }">
+  <div class="page">
     <slot />
   </div>
 </template>
 
 <script setup>
-defineProps({ theme: Object })
+// 已移除 theme 参数，统一用 CSS 变量
 </script>
 
-<style scoped>
+<style>
 .page {
-  padding: 24px;
-  min-width: 320px;
-  min-height: 200px;
-  border-radius: 8px;
+  overflow: hidden;
+  height: 218px;
+  padding: 14px 16px;
+  box-sizing: border-box;
+  background: var(--background);
+  color: var(--text);
 }
 </style>

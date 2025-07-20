@@ -8,13 +8,16 @@
 // No props needed
 </script>
 
-<style scoped>
+<style>
 .version-badge {
-  background: #eee;
-  color: #333;
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin-left: 8px;
+  text-transform: uppercase;
+  font-size: 9px;
+  color: #a8a8a8;
+  font-weight: 500;
+  letter-spacing: 0.8px;
+  line-height: 1.3rem;
+  padding-bottom: 3px;
+  cursor: none;
+  -webkit-user-select: none;
 }
 </style>

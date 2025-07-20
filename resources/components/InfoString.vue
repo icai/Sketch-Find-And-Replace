@@ -1,17 +1,17 @@
 <template>
-  <span class="info-string" :style="style">
+  <span class="info-string">
     <slot />
   </span>
 </template>
 
 <script setup>
-defineProps({ style: Object, theme: Object })
+// 已移除 style prop，统一用 CSS 变量
 </script>
 
-<style scoped>
+<style>
 .info-string {
   font-size: 13px;
-  color: #666;
+  color: var(--text-info, #666);
   display: inline-block;
 }
 </style>

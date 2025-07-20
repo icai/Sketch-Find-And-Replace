@@ -23,10 +23,10 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      events: '@skpm/events',
-      path: '@skpm/path',
-      fs: '@skpm/fs',
-      os: '@skpm/os',
+      // events: '@skpm/events',
+      // path: '@skpm/path',
+      // fs: '@skpm/fs',
+      // os: '@skpm/os',
     }
   },
   build: {
@@ -51,6 +51,8 @@ export default defineConfig({
         // },
       },
       external: [
+        'events',
+        // 'path',
         'sketch/ui',
         'sketch/dom',
         'sketch/settings',

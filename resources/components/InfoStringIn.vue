@@ -1,17 +1,12 @@
 <template>
-  <span class="info-string-in" :style="style">
+  <span class="info-string-in">
     <slot />
   </span>
 </template>
-
-<script setup>
-defineProps({ style: Object, theme: Object })
+<script>
 </script>
-
-<style scoped>
+<style>
 .info-string-in {
-  font-size: 12px;
-  color: #999;
-  display: inline-block;
+  color: var(--text-info, #494949);
 }
 </style>

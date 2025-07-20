@@ -1,7 +1,7 @@
 <template>
-    <svg 
+    <svg
       width="24px"
-      height="30px" 
+      height="30px"
       viewBox="0 0 24 30"
       >
       <rect x="0" y="10" width="4" height="10" :fill="color" opacity="0.2">

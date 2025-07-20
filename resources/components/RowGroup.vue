@@ -8,7 +8,7 @@
 // No script needed
 </script>
 
-<style scoped>
+<style>
 .row-group {
   margin-bottom: 16px;
 }

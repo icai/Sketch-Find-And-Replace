@@ -1,23 +1,7 @@
 <template>
   <div
     class="help-page"
-    :style="{
-      position: 'absolute',
-      top: isActive ? '0' : '240px',
-      width: '100%',
-      overflow: 'scroll',
-      height: '218px',
-      padding: '14px 16px 16px 16px',
-      background: theme?.background,
-      color: theme?.text,
-      zIndex: 100,
-      transition: 'top 0.15s ease-in-out',
-      marginBottom: '32px',
-      boxSizing: 'border-box',
-      MozBoxSizing: 'border-box',
-      WebkitBoxSizing: 'border-box',
-      fontSize: 'small'
-    }"
+    :style="{ top: isActive ? '0' : '240px', display: isActive ? 'block' : 'none' }"
   >
     <label class="top-label" @click="close" :style="{ color: '#a8a8a8' }">× Help</label>
     <h2>Sketch Find and Replace <small>{{ version }}</small></h2>
@@ -25,29 +9,29 @@
     <p>New Shortcut : "cmd option shift f"</p>
     <h3>Options to find</h3>
     <div class="help-icons-container">
-      <div class="help-icon"><RegexIcon :theme="theme" :isActive="true"/></div>
+      <div class="help-icon"><RegexIcon :isActive="true"/></div>
       <div class="help-icon-description">Regex (Regular expressions)*</div>
     </div>
     <div class="help-icons-container">
-      <div class="help-icon"><CaseSensitiveIcon :theme="theme" :isActive="true"/></div>
+      <div class="help-icon"><CaseSensitiveIcon :isActive="true"/></div>
       <div class="help-icon-description">Case Sensitive (on)/ Case Insensitive (off)</div>
     </div>
     <div class="help-icons-container">
-      <div class="help-icon"><WholeWordIcon :theme="theme" :isActive="true"/></div>
+      <div class="help-icon"><WholeWordIcon :isActive="true"/></div>
       <div class="help-icon-description">Whole Word</div>
     </div>
     <p>* Tips: Turn Regex off if you don't know what Regex is.</p>
     <h3>Replace context</h3>
     <div class="help-icons-container">
-      <div class="help-icon"><SelectionIcon :theme="theme" :isActive="true"/></div>
+      <div class="help-icon"><SelectionIcon :isActive="true"/></div>
       <div class="help-icon-description">Selection (visible if a selection is active)</div>
     </div>
     <div class="help-icons-container">
-      <div class="help-icon"><PageIcon :theme="theme" :isActive="true"/></div>
+      <div class="help-icon"><PageIcon :isActive="true"/></div>
       <div class="help-icon-description">Current page</div>
     </div>
     <div class="help-icons-container">
-      <div class="help-icon"><DocumentIcon :theme="theme" :isActive="true"/></div>
+      <div class="help-icon"><DocumentIcon :isActive="true"/></div>
       <div class="help-icon-description">All pages of a document</div>
     </div>
     <p>By default Find and Replace don’t replace string of symbols master except if you are in selection mode or on the “Symbols” named page.</p>
@@ -76,7 +60,7 @@
     <h3>Preference Settings</h3>
     <p>Your last search and mode (dark/light) are saved.</p>
     <div class="btn-help-container">
-      <Button @click="resetPref" :theme="theme" :isActive="true">
+      <Button @click="resetPref" :isActive="true">
         Reset Preference Settings
       </Button>
     </div>
@@ -85,7 +69,7 @@
     <p>I’m always happy to be involved into interesting projects.</p>
     <p><a href="https://github.com/icai?ref=sketch">Github: @icai</a></p>
     <div class="btn-help-container">
-      <Button @click="close" :theme="theme" primary :isActive="true">
+      <Button @click="close" primary :isActive="true">
         Close Help
       </Button>
     </div>
@@ -105,14 +89,33 @@ import pack from '../../package.json'
 
 defineProps({
   isActive: Boolean,
-  theme: Object,
   close: Function,
   resetPref: Function
 })
 const version = computed(() => pack.version)
 </script>
 
-<style scoped>
+<style>
+
+/* Help page main container styles */
+.help-page {
+  position: absolute;
+  width: 100%;
+  overflow: scroll;
+  height: 218px;
+  padding: 14px 16px 16px 16px;
+  background: var(--background);
+  color: var(--text);
+  z-index: 100;
+  transition: top 0.15s ease-in-out;
+  margin-bottom: 32px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  font-size: small;
+  display: none;
+}
+
 .top-label {
   text-transform: uppercase;
   font-size: 13px;
@@ -121,8 +124,9 @@ const version = computed(() => pack.version)
   letter-spacing: 0.8px;
   line-height: 1.3rem;
   padding-bottom: 3px;
-  -webkit-user-select: none;
+  user-select: none;
 }
+
 .help-icons-container {
   display: flex;
   flex-direction: row;

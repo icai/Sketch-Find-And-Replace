@@ -6,13 +6,7 @@ import LoadingIcon from './svg-icons/LoadingIcon.vue'
 const props = defineProps<{
   resetPref: () => void
   isActive: boolean
-  theme: {
-    background: string
-    text: string
-    activeIconColor: string
-  }
 }>()
-
 
 const topValue = computed(() => (props.isActive ? 0 : 240) + 'px')
 </script>
@@ -20,19 +14,19 @@ const topValue = computed(() => (props.isActive ? 0 : 240) + 'px')
 <template>
   <div
     class="loading-page"
-    :style="{ top: topValue, backgroundColor: theme.background, color: theme.text }"
+    :style="{ top: topValue, display: isActive ? 'block' : 'none' }"
   >
     <div class="loading-container">
-      <LoadingIcon :color="theme.activeIconColor" />
+      <LoadingIcon :color="'var(--active-icon-color)'" />
     </div>
     <div class="btn-container">
-      <Button :theme="theme" :isActive="true" @click="resetPref">Reset Preference Settings</Button>
+      <Button :isActive="true" @click="resetPref">Reset Preference Settings</Button>
     </div>
     <div class="msg">Sketch Find and Replace</div>
   </div>
 </template>
 
-<style scoped>
+<style>
 .loading-page {
   position: absolute;
   width: 100%;
@@ -43,6 +37,8 @@ const topValue = computed(() => (props.isActive ? 0 : 240) + 'px')
   transition: top 0.15s ease-in-out;
   margin-bottom: 32px;
   box-sizing: border-box;
+  background-color: var(--background);
+  color: var(--text);
 }
 
 .loading-container {

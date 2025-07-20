@@ -43,13 +43,14 @@ export default defineConfig({
       output: {
         format: 'cjs',
         assetFileNames: (info) => {
+          // 把非 HTML 文件放入 assets
           if (info.name && info.name.endsWith('.css')) {
-            return 'assets/[name][extname]'
+            return 'assets/[name]-[hash][extname]'
           }
-          return 'assets/[name][extname]'
+          return 'assets/[name]-[hash][extname]'
         },
-        entryFileNames: 'assets/[name].js',
-        chunkFileNames: 'assets/[name].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
       },
     },
     outDir: 'Find-and-replace.sketchplugin/Contents/Resources',

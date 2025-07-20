@@ -8,7 +8,7 @@
 // No script needed
 </script>
 
-<style scoped>
+<style>
 .action-bar {
   position: absolute;
   top: 15px;

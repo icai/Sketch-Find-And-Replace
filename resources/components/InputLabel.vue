@@ -1,17 +1,22 @@
 <template>
-  <label class="input-label" :style="style">
+  <label class="input-label">
     <slot />
   </label>
 </template>
 
 <script setup>
-defineProps({ style: Object, theme: Object })
 </script>
 
-<style scoped>
+<style>
 .input-label {
+  text-transform: uppercase;
   font-size: 13px;
-  color: #888;
-  margin-right: 8px;
+  color: #a8a8a8;
+  font-weight: 500;
+  letter-spacing: 0.8px;
+  line-height: 1.3rem;
+  padding-bottom: 3px;
+  cursor: none;
+  user-select: none;
 }
 </style>

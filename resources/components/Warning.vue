@@ -1,20 +1,20 @@
 <template>
-  <div class="warning">
+  <div class="warning" :style="{ top: isActive ? '-32px' : '0' }">
     <slot />
   </div>
 </template>
 
 <script setup>
-// No props needed
+defineProps({ isActive: Boolean })
 </script>
 
-<style scoped>
+<style>
 .warning {
-  background: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffeeba;
-  padding: 8px 12px;
-  border-radius: 4px;
-  margin: 8px 0;
+  position: absolute;
+  width: 100%;
+  background-color: lime;
+  color: var(--textInfo);
+  z-index: 100;
+  transition: top 0.15s ease-in-out;
 }
 </style>

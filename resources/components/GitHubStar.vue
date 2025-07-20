@@ -8,7 +8,7 @@
 // No props needed
 </script>
 
-<style scoped>
+<style>
 .github-star {
   color: #333;
   text-decoration: none;

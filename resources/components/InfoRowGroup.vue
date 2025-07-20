@@ -8,7 +8,7 @@
 // No script needed
 </script>
 
-<style scoped>
+<style>
 .info-row-group {
   margin-top: -2px;
   margin-bottom: 12px;

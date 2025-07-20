@@ -3,7 +3,7 @@
     <svg width='38px' height='32px' viewBox='0 0 38 32'>
       <g
         stroke='none'
-        :fill="isActive ? theme.activeIconColor : theme.inactiveIconColor"
+         :fill="isActive ? 'var(--active-icon-color)' : 'var(--inactive-icon-color)'"
         fillRule='nonzero'
       >
         <g>
@@ -15,5 +15,5 @@
 </template>
 
 <script setup>
-defineProps({ theme: Object, isActive: Boolean })
+defineProps({ isActive: Boolean })
 </script>
