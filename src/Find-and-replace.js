@@ -1,4 +1,4 @@
-import BrowserWindow from './sketch-web-view/lib/index'
+import BrowserWindow from './sketch-web-view/lib'
 import { isWebviewPresent, sendToWebview } from './sketch-web-view/remote'
 import pack from '../package.json'
 
@@ -365,14 +365,14 @@ export default function(context) {
     initRegExp(newState)
     saveSettings(state)
     // 通知前端 replaceStart 结束，关闭 loading
-    // if (isWebviewPresent(windowOptions.identifier)) {
-    //   // 先更新数据
-    //   const stateForUpdate = Object.assign({}, state, { replaceStart: false })
-    //   sendToWebview(
-    //     windowOptions.identifier,
-    //     `updateData('${JSON.stringify(stateForUpdate)}')`
-    //   )
-    // }
+    if (isWebviewPresent(windowOptions.identifier)) {
+      // 先更新数据
+      const stateForUpdate = Object.assign({}, state, { replaceStart: false })
+      sendToWebview(
+        windowOptions.identifier,
+        `updateData('${JSON.stringify(stateForUpdate)}')`
+      )
+    }
     browserWindow.close()
   }, 100))
 

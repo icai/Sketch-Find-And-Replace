@@ -68,7 +68,7 @@ V2 Created by [Thierry Charbonnel - @thierryc](https://anotherplanet.io).
 V2 Maintained and improved by [Thierry Charbonnel - @thierryc](https://anotherplanet.io).
 
 
-V3 Created, maintained by [Thierry Charbonnel - @thierryc](https://github.com/thierryc) and [Terry Cai - @icai](https://github.com/icai).
+V3 Created by [Terry Cai - @icai](https://github.com/icai).
 
 Webview UI migrated from React to Vue 3 by [Terry Cai - @icai](https://github.com/icai).
 

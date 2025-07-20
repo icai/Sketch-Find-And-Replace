@@ -1641,6 +1641,13 @@ function FindAndReplace(context) {
     const newState = Object.assign({}, JSON.parse(json));
     initRegExp(newState);
     saveSettings(state);
+    if (isWebviewPresent(windowOptions.identifier)) {
+      const stateForUpdate = Object.assign({}, state, { replaceStart: false });
+      sendToWebview(
+        windowOptions.identifier,
+        `updateData('${JSON.stringify(stateForUpdate)}')`
+      );
+    }
     browserWindow.close();
   }, 100));
   contents.on("selection", debounce((json) => {
