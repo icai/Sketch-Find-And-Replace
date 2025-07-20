@@ -4,7 +4,7 @@
   "author": "Terry Cai",
   "authorEmail" : "gidcai@gmail.com",
   "homepage": "https://github.com/icai/Sketch-Find-And-Replace/",
-  "identifier": "cx.icai.sketch-find-and-replace",
+  "identifier": "github.icai.sketch-find-and-replace",
   "updateURL": "https://raw.githubusercontent.com/icai/Sketch-Find-And-Replace/master/src/manifest.json",
   "appcast": "https://raw.githubusercontent.com/icai/Sketch-Find-And-Replace/master/.appcast.xml",
   "compatibleVersion": 3,

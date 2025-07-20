@@ -2,7 +2,6 @@ import BrowserWindow from 'sketch-module-web-view'
 import { isWebviewPresent, sendToWebview } from 'sketch-module-web-view/remote'
 import pack from '../package.json'
 
-
 import UI from 'sketch/ui'
 import Settings from 'sketch/settings'
 import Document from 'sketch/dom'
@@ -18,8 +17,8 @@ import Document from 'sketch/dom'
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions
 
 
-const PREFUNIQUKEY = 'cx.icai.sketch-find-and-replace.pref'
-const SATEUNIQUKEY = 'cx.icai.sketch-find-and-replace.state'
+const PREFUNIQUKEY = 'github.icai.sketch-find-and-replace.pref'
+const SATEUNIQUKEY = 'github.icai.sketch-find-and-replace.state'
 
 // to delete saved settings uncoment the next line
 // Settings.setSettingForKey(PREFUNIQUKEY, JSON.stringify({}))
@@ -124,7 +123,7 @@ export default function(context) {
 
 
   const windowOptions = {
-    identifier: 'cx.icai.sketch-find-and-replace',
+    identifier: 'github.icai.sketch-find-and-replace',
     width: 460,
     height: 250,
     resizable: false,

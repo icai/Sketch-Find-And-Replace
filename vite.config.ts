@@ -4,16 +4,6 @@ import path from 'path'
 import fs from 'fs'
 import { moveScriptToBodyPlugin } from './vite-plugins/move-script-to-body'
 
-function removeCrossoriginPlugin(): import('vite').Plugin {
-  return {
-    name: 'remove-crossorigin',
-    transformIndexHtml(html) {
-      // 全局替换 crossorigin（无论是 script 还是 link）
-      return html.replace(/\s*crossorigin(?:="[^"]*")?/gi, '')
-    }
-  }
-}
-
 
 export default defineConfig({
   base: './',
@@ -31,7 +21,6 @@ export default defineConfig({
         )
       }
     },
-    // removeCrossoriginPlugin(),
 
   ],
   // assets/icon.png copy
