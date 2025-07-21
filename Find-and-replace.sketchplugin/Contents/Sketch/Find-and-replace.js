@@ -1533,7 +1533,7 @@ function FindAndReplace(context) {
     parseLayers(selection);
     const count = layers.length + overrides.length;
     state = Object.assign({}, state, { count });
-    updateSateWebview();
+    updateSateWebview({ replaceStart: false });
   };
   const replaceInLayer = (layer) => {
     const newStringValue = layer.text.replace(state.regex, escapeReplaceString(state.replaceString));
@@ -1549,17 +1549,16 @@ function FindAndReplace(context) {
       overrides.push(override);
     }
   };
-  const updateSateWebview = (init) => {
-    if (init) {
-      state = Object.assign({}, state, { init });
-    }
+  const updateSateWebview = ({ init = false, replaceStart = false }) => {
+    state = Object.assign({}, state, { init, replaceStart });
     if (isWebviewPresent(windowOptions.identifier)) {
+      console.log("Webview is present, updating state", state);
       sendToWebview(
         windowOptions.identifier,
         `updateData('${JSON.stringify(state)}')`
       );
     }
-    state = Object.assign({}, state, { init: false });
+    state = Object.assign({}, state, { init: false, replaceStart });
   };
   const parseLayers = (layers2) => {
     const { findMode } = state;
@@ -1615,7 +1614,8 @@ function FindAndReplace(context) {
     });
   };
   contents.once("did-finish-load", () => {
-    updateSateWebview(true);
+    console.log("BrowserWindow did-finish-load");
+    updateSateWebview({ init: true });
   });
   contents.once("close", () => {
     console.log("BrowserWindow closed");
@@ -1642,13 +1642,6 @@ function FindAndReplace(context) {
     const newState = Object.assign({}, JSON.parse(json));
     initRegExp(newState);
     saveSettings(state);
-    if (isWebviewPresent(windowOptions.identifier)) {
-      const stateForUpdate = Object.assign({}, state, { replaceStart: false });
-      sendToWebview(
-        windowOptions.identifier,
-        `updateData('${JSON.stringify(stateForUpdate)}')`
-      );
-    }
     browserWindow.close();
   }, 100));
   contents.on("selection", debounce((json) => {
@@ -1667,7 +1660,7 @@ function FindAndReplace(context) {
       }
     }
     saveSettings(state);
-    updateSateWebview(false);
+    updateSateWebview({ init: false });
   }, 100));
 }
 globalThis['onRun'] =  FindAndReplace;

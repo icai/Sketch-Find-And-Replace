@@ -121,7 +121,6 @@ export default function(context) {
     Settings.setSettingForKey(PREFUNIQUKEY, str)
   }
 
-
   const windowOptions = {
     identifier: 'github.icai.sketch-find-and-replace',
     width: 460,
@@ -190,7 +189,7 @@ export default function(context) {
     state = Object.assign({}, state, { count })
     // send count
     // log(JSON.stringify(state,null,2))
-    updateSateWebview()
+    updateSateWebview({ replaceStart: false })
   }
 
   const replaceInLayer = (layer) => {
@@ -209,17 +208,17 @@ export default function(context) {
     }
   }
 
-  const updateSateWebview = (init) => {
-    if (init) {
-      state = Object.assign({}, state, { init })
-    }
+  const updateSateWebview = ({ init = false, replaceStart = false }) => {
+
+    state = Object.assign({}, state, { init, replaceStart })
     if (isWebviewPresent(windowOptions.identifier)) {
+      console.log('Webview is present, updating state', state)
       sendToWebview(
         windowOptions.identifier,
         `updateData('${JSON.stringify(state)}')`
       )
     }
-    state = Object.assign({}, state, { init: false })
+    state = Object.assign({}, state, { init: false, replaceStart })
   }
 
   const layerTextMatch = () => {
@@ -329,7 +328,8 @@ export default function(context) {
   }
 
   contents.once('did-finish-load', () => {
-    updateSateWebview(true)
+    console.log('BrowserWindow did-finish-load')
+    updateSateWebview({ init: true })
   })
 
   contents.once('close', () => {
@@ -366,14 +366,7 @@ export default function(context) {
     initRegExp(newState)
     saveSettings(state)
     // 通知前端 replaceStart 结束，关闭 loading
-    if (isWebviewPresent(windowOptions.identifier)) {
-      // 先更新数据
-      const stateForUpdate = Object.assign({}, state, { replaceStart: false })
-      sendToWebview(
-        windowOptions.identifier,
-        `updateData('${JSON.stringify(stateForUpdate)}')`
-      )
-    }
+
     browserWindow.close()
   }, 100))
 
@@ -393,36 +386,7 @@ export default function(context) {
       }
     }
     saveSettings(state)
-    updateSateWebview(false)
+    updateSateWebview({ init: false })
   }, 100))
 
-  /*
-
-  browserWindow.webContents
-    .executeJavaScript(`updateData(${JSON.stringify(state)})`)
-    .then(res => {
-      // do something with the result
-    });
-
-    browserWindow.webContents
-    .executeJavaScript(`updateData(${JSON.stringify(state)})`)
-    .then(res => {
-      // do something with the result
-    });
-
-    const document = sketch.getSelectedDocument();
-  if (document) {
-    const page = document.selectedPage;
-    const selection = document.selectedLayers;
-    let layers;
-    if (selection.length > 0) {
-      UI.message('Find and replace in the selection');
-      layers = selection;
-    } else {
-      UI.message('Find and replace in the current page');
-      layers = page.layers;
-    }
-  }
-  //UI.message("It's alive 🙌")
-  */
 }

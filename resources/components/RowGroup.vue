@@ -10,6 +10,6 @@
 
 <style>
 .row-group {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 </style>

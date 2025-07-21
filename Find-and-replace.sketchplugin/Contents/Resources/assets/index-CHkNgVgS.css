@@ -16,7 +16,8 @@
   --input-background: #FAFAFA;
 }
 
-[data-theme='dark'] {
+
+.__skpm-dark,[data-theme='dark'] {
   --background: #212121;
   --stroke: #616161;
   --text: #A0A0A0;
@@ -181,7 +182,7 @@ a, a:active, a:visited {
 }
 
 .row-group {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .info-row-group {
