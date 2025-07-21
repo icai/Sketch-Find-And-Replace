@@ -6,7 +6,7 @@
 ![Find and Replace (text) for Sketch](https://raw.githubusercontent.com/icai/Sketch-Find-And-Replace/master/_crea/visual-v3.jpg)
 
 
-[Folow me on twitter](https://twitter.com/@Autre_planete) to be posted.
+[Folow me on twitter](https://x.com/rainAchi) to be posted.
 
 
 ##  sketch 62 and >. (version: 2.6.0)
