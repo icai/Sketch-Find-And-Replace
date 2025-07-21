@@ -41,6 +41,7 @@ const replaceInputRef = ref(null)
 onMounted(() => {
   window.SetSettings = json => {
     const state = JSON.parse(json)
+    console.log('SetSettings', state)
     darkMode.value = state.darkMode
     regexActive.value = state.regexActive
     caseSensitive.value = state.caseSensitive

@@ -3,10 +3,14 @@ import { computed } from 'vue'
 import Button from './Button.vue'
 import LoadingIcon from './svg-icons/LoadingIcon.vue'
 
-const props = defineProps<{
-  resetPref: () => void
-  isActive: boolean
-}>()
+
+const props = withDefaults(defineProps<{
+  resetPref?: () => void
+  isActive?: boolean
+}>(), {
+  resetPref: () => {},
+  isActive: false
+})
 
 const topValue = computed(() => (props.isActive ? 0 : 240) + 'px')
 </script>

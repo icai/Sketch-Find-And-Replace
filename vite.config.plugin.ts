@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import path from 'path'
 import fs from 'fs'
 import { vitePluginOnRunDefine } from './vite-plugins/vite-plugin-sketch-define'
+import { SketchToolVitePlugin } from './vite-plugins/vite-sketchtool-plugin'
 
 
 
@@ -9,6 +10,11 @@ export default defineConfig({
   plugins: [
     vitePluginOnRunDefine({
       definedKeys: ['onRun']
+    }),
+    SketchToolVitePlugin({
+      pluginIdentifier: 'github.icai.sketch-find-and-replace',
+      sketchVersion: '2015.1',
+      script: 'echo "Post-build script here"',
     }),
     {
       name: 'sketch-copy-assets',
@@ -18,8 +24,7 @@ export default defineConfig({
           path.resolve(__dirname, 'Find-and-replace.sketchplugin/Contents/Sketch/manifest.json')
         )
       }
-    },
-
+    }
   ],
   resolve: {
     alias: {

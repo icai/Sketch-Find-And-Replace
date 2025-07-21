@@ -1618,6 +1618,7 @@ function FindAndReplace(context) {
     updateSateWebview(true);
   });
   contents.once("close", () => {
+    console.log("BrowserWindow closed");
     browserWindow.close();
   });
   contents.on("message", (s) => {

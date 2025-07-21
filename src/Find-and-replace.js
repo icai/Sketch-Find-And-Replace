@@ -333,6 +333,7 @@ export default function(context) {
   })
 
   contents.once('close', () => {
+    console.log('BrowserWindow closed')
     browserWindow.close()
   })
 

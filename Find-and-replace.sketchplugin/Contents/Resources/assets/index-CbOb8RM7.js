@@ -6521,8 +6521,9 @@ const _hoisted_2 = { class: "btn-container" };
 const _sfc_main$d = /* @__PURE__ */ defineComponent({
   __name: "Loading",
   props: {
-    resetPref: { type: Function },
-    isActive: { type: Boolean }
+    resetPref: { type: Function, default: () => {
+    } },
+    isActive: { type: Boolean, default: false }
   },
   setup(__props) {
     const props = __props;
@@ -6724,6 +6725,7 @@ const _sfc_main = {
     onMounted(() => {
       window.SetSettings = (json) => {
         const state = JSON.parse(json);
+        console.log("SetSettings", state);
         darkMode.value = state.darkMode;
         regexActive.value = state.regexActive;
         caseSensitive.value = state.caseSensitive;
