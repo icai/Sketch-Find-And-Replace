@@ -7151,10 +7151,4 @@ const initApp = () => {
   const app = createApp(_sfc_main);
   app.mount("#root");
 };
-setTimeout(() => {
-  if (document.readyState === "complete" || document.readyState === "interactive") {
-    initApp();
-  } else {
-    document.addEventListener("DOMContentLoaded", initApp);
-  }
-}, 0);
+initApp();
